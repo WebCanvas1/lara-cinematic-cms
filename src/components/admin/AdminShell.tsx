@@ -8,7 +8,15 @@ import {
 } from "lucide-react";
 import { lockAdmin } from "@/lib/admin.functions";
 
-const nav = [
+type NavItem = {
+  to: "/admin" | "/admin/hero" | "/admin/about" | "/admin/services" | "/admin/portfolio"
+    | "/admin/gallery" | "/admin/testimonials" | "/admin/why-choose" | "/admin/contact"
+    | "/admin/footer" | "/admin/enquiries";
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+};
+const nav: NavItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/hero", label: "Hero", icon: Home },
   { to: "/admin/about", label: "About", icon: Info },
@@ -20,7 +28,7 @@ const nav = [
   { to: "/admin/contact", label: "Contact & Social", icon: Contact },
   { to: "/admin/footer", label: "Footer", icon: Users },
   { to: "/admin/enquiries", label: "Enquiries", icon: MessageSquare },
-] as const;
+];
 
 export function AdminShell() {
   const navigate = useNavigate();
