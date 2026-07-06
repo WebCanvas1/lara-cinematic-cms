@@ -2,10 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { SiteBundle } from "./site-types";
 
-// -------- shared: build a supabase client from inside handlers (never at module scope) --------
 async function getPublicClient() {
   const { createClient } = await import("@supabase/supabase-js");
-  const { Database } = await import("@/integrations/supabase/types").then((m) => ({ Database: null as unknown as m.Database }));
   return createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_PUBLISHABLE_KEY!,
