@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,9 +9,7 @@ export const Route = createFileRoute("/admin/unlock")({
   ssr: false,
   beforeLoad: async () => {
     const { unlocked } = await checkAdminStatus();
-    if (unlocked) {
-      throw new (await import("@tanstack/react-router")).notFound(); // never; we redirect below in loader
-    }
+    if (unlocked) throw redirect({ to: "/admin" });
   },
   component: UnlockPage,
   head: () => ({ meta: [{ title: "Admin — Lara" }, { name: "robots", content: "noindex, nofollow" }] }),
