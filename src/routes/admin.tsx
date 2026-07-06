@@ -1,15 +1,13 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { checkAdminStatus } from "@/lib/admin.functions";
+import { AdminDashboard } from "@/components/admin/AdminDashboard";
 
-// Layout route: /admin. Gates children by checking the encrypted session cookie
-// server-side. /admin/unlock skips this via its own beforeLoad.
 export const Route = createFileRoute("/admin")({
   ssr: false,
-  beforeLoad: async ({ location }) => {
-    if (location.pathname === "/admin/unlock") return;
+  beforeLoad: async () => {
     const { unlocked } = await checkAdminStatus();
     if (!unlocked) throw redirect({ to: "/admin/unlock" });
   },
-  component: () => <Outlet />,
-  head: () => ({ meta: [{ name: "robots", content: "noindex, nofollow" }] }),
+  component: AdminDashboard,
+  head: () => ({ meta: [{ title: "Admin — Lara" }, { name: "robots", content: "noindex, nofollow" }] }),
 });
