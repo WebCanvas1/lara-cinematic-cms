@@ -1,6 +1,6 @@
 # Lara Cinematography — Cloudflare Pages CMS
 
-A React + Vite static site with a lightweight admin CMS, powered entirely by
+A React + Vite static site with lightweight admin CMS, powered entirely by
 Cloudflare Pages Functions and Cloudflare KV. No external database, no
 external storage — images are compressed to Base64 and stored in KV.
 
