@@ -27,7 +27,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(function Link(
         ref={ref}
         to={to}
         end={activeOptions?.exact}
-        className={({ isActive }) =>
+        className={({ isActive }: { isActive: boolean }) =>
           [className, isActive ? activeProps.className : ""].filter(Boolean).join(" ")
         }
         {...rest}
