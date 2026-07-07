@@ -1,63 +1,77 @@
+# Convert to Cloudflare Pages + Functions + KV
 
-# Lara Cinematography — Build Plan
+You've confirmed:
+1. The Lovable preview/editor will stop working after this — the project becomes GitHub → Cloudflare Pages only.
+2. Base64 images in KV are acceptable (with the size/perf caveats).
+3. HashRouter is preferred.
 
-Bespoke luxury editorial site + admin CMS. Built on Lovable's stack (TanStack Start on Cloudflare Workers + Lovable Cloud/Postgres + managed storage). Shared-password admin gate as you chose.
+## What gets removed
 
-## Design system
+- `@tanstack/react-start`, `@tanstack/react-router`, `@tanstack/router-plugin`, `@lovable.dev/vite-tanstack-config`, `nitro`, `h3`
+- `@supabase/*`, `supabase/` folder, `src/integrations/supabase/`
+- `src/routes/`, `src/routeTree.gen.ts`, `src/router.tsx`, `src/server.ts`, `src/start.ts`
+- All `*.functions.ts` server-fn modules and `session.server.ts`
+- Lovable-specific: `src/lib/lovable-error-reporting.ts`, `src/lib/error-capture.ts`, `src/lib/error-page.ts`
 
-- Palette: `#FFFFFF` bg, `#FAFAF8` warm-white, `#F5F5F5` accent, `#111111` headings, `#222222` body, `#C6A56B` champagne gold accent. All tokenized in `src/styles.css` (oklch).
-- Type: Playfair Display (headings) + Inter (body), via `@fontsource-variable/*` packages.
-- Motion: subtle fade-in + scroll reveal (Motion for React), image hover zoom, smooth scroll. No flashy effects.
-- Editorial spacing: generous whitespace, large serif display, thin gold hairlines and small-caps labels.
+## What gets added
 
-## Public routes
+### Vite config
+Standard `@vitejs/plugin-react` + Tailwind v4 plugin. Output → `dist/`.
 
-- `/` — Hero (full-viewport, video or image bg, headline, two CTAs), Featured Films grid, Gallery preview (masonry), About preview, Services grid, Why Choose (icon cards), Testimonial slider, Instagram feed, Contact CTA, Footer.
-- `/portfolio` — Category filter chips (Weddings, Engagements, Events, Commercial, Reels), video grid, YouTube/Vimeo lightbox.
-- `/gallery` — Masonry, category filter, lightbox, lazy-load.
-- `/about` — Story, portrait, experience, philosophy, behind-the-scenes.
-- `/contact` — Full enquiry form (name, email, phone, date, venue, service, budget, message) with zod validation, WhatsApp CTA, contact cards, map placeholder, socials. Submissions saved to `enquiries` table.
-- SEO: per-route `head()` with title/description/OG/Twitter, JSON-LD LocalBusiness on home, VideoObject on portfolio items, `sitemap.xml` route, `robots.txt`.
+### Routing (`react-router-dom` HashRouter)
+```
+src/main.tsx        - ReactDOM.createRoot + HashRouter
+src/App.tsx         - <Routes> for /, /portfolio, /gallery, /about, /contact, /admin, /admin/unlock, *
+```
+Each existing route component moves from `src/routes/*.tsx` to `src/pages/*.tsx`, stripped of `createFileRoute`/`head()` — page titles set via a tiny `useDocumentTitle` hook. Static SEO meta goes into `index.html`.
 
-## Admin (`/admin`) — shared password gate
+### Cloudflare Pages Functions (`/functions/api/`)
+```
+functions/
+  _middleware.ts           - reads cookie, sets ctx.data.isAdmin, adds CORS
+  api/
+    content.ts             - GET (public), POST (admin)   → KV key "site-content"
+    portfolio.ts           - GET, POST                    → "portfolio"
+    gallery.ts             - GET, POST                    → "gallery"
+    settings.ts            - GET, POST                    → "settings"
+    services.ts            - GET, POST                    → "services" (new; admin currently edits these)
+    testimonials.ts        - GET, POST                    → "testimonials"
+    login.ts               - POST { password } → sets HttpOnly signed cookie
+    logout.ts              - POST → clears cookie
+    session.ts             - GET → { unlocked: boolean }
+    enquiry.ts             - POST (public), GET (admin), DELETE (admin)
+```
 
-- Server-only `ADMIN_PASSWORD` + `SESSION_SECRET` env vars (I'll generate `SESSION_SECRET`; you enter `ADMIN_PASSWORD`).
-- `useSession` encrypted cookie, timing-safe compare inside a `createServerFn` (per Lovable's shared-password gate pattern).
-- `/admin/unlock` login form, `/admin/*` gated via server-fn checks + client redirect.
-- Sidebar layout, white UI. Sections: Dashboard, Hero, About, Services, Portfolio, Gallery, Testimonials, Why-Choose, Contact & Social, Footer, Enquiries.
-- CRUD + drag-and-drop reorder (dnd-kit) for portfolio/gallery/services/testimonials/why-choose.
-- Image uploads → Lovable Cloud Storage bucket `media` (public read). Client-side compression before upload, progress, previews. (Note: managed storage instead of base64-in-KV — same UX, far better performance and no size limits.)
-- Toast confirmations, unsaved-changes warning, delete confirmation, graceful errors.
+Session: HMAC-signed cookie `lara_admin=<timestamp>.<hmacSHA256(timestamp, ADMIN_PASSWORD)>`, 14-day expiry, `HttpOnly; Secure; SameSite=Lax`. Verified via Web Crypto in `_middleware.ts`.
 
-## Data (Lovable Cloud / Postgres)
+### Default data
+`functions/_defaults.ts` — the seed content currently in the SQL migration, re-exported as JSON. If a KV `get` returns null, the function returns defaults (public GET) or seeds KV on first admin write.
 
-Tables, all with `TO anon` SELECT policies for public content; writes gated by admin server fns using service-role after password check:
+### Client data layer
+Replace `src/lib/queries.ts` / `admin-queries.ts` / `content.functions.ts` / `admin.functions.ts` with a single `src/lib/api.ts` using `fetch("/api/...")`. Keep TanStack Query — it works fine as a client cache. All existing components keep the same hook signatures (`useSiteBundle`, `useAdminData`, etc.) so section/admin components don't change.
 
-- `site_content` (single row, JSON blobs per section: hero, about, why_choose, footer)
-- `settings` (contact info, social links, business hours)
-- `services` (id, icon, title, description, order, active)
-- `portfolio` (id, title, category, description, youtube_url, vimeo_url, thumbnail_url, cover_url, featured, order)
-- `gallery` (id, image_url, alt, category, featured, order)
-- `testimonials` (id, name, role, quote, avatar_url, order)
-- `enquiries` (id, name, email, phone, event_date, venue, service, budget, message, created_at) — insert allowed for anon; admin-only read.
+### Image uploads
+Client-side compress with `browser-image-compression` (already installed) → base64 data URL → included inline in the JSON payload POSTed to the relevant endpoint. No separate upload endpoint. Same shape as today.
 
-Defaults seeded via migration if tables empty (based on the reference site's services/content areas — you'll edit real copy in `/admin`).
+### Cloudflare Pages config
+- `wrangler.toml` at repo root with `[[kv_namespaces]] binding = "LARA_CINEMATOGRAPHY_KV"` placeholder
+- `public/_redirects`: `/* /index.html 200` (SPA fallback; HashRouter doesn't strictly need it but safer)
+- `public/_headers`: basic cache rules for `/assets/*`
 
-## Technical notes
+### README
+Cloudflare Pages setup steps:
+1. Create KV namespace `LARA_CINEMATOGRAPHY_KV` (dashboard or `wrangler kv:namespace create`)
+2. Bind it in Pages project → Settings → Functions → KV bindings
+3. Set env var `ADMIN_PASSWORD` (Production + Preview)
+4. Connect GitHub repo, framework = None (or Vite), build = `npm run build`, output = `dist`
+5. Deploy
 
-- All writes go through `createServerFn` handlers that verify the encrypted session cookie set by the password gate before using service-role client.
-- Image compression via `browser-image-compression`.
-- Video embeds: lite YouTube/Vimeo facades for perf.
-- `<Suspense>` + `useSuspenseQuery` loader pattern for SEO-critical routes.
+## Rollout note
 
-## Deliverables in this build
+I'll do this in one large batch since files are tightly coupled — after the rewrite, `bun run build` should produce a working `dist/`. The Lovable preview will show errors during the transition and after (expected — the sandbox runs TanStack Start).
 
-Full public site + full admin + seeded defaults + SEO + sitemap/robots. README with admin password setup + content management guide.
+## Section-component compatibility
 
-## What I need from you after approval
+`SiteHeader`, `SiteFooter`, all `sections/*`, `AdminDashboard`, `ImagePicker` keep their prop shapes. Only the data-fetching hooks change underneath. `<Link to="/x">` from `@tanstack/react-router` becomes `<Link to="/x">` from `react-router-dom` — identical call sites.
 
-1. Approve so I can enable Lovable Cloud.
-2. Enter `ADMIN_PASSWORD` when I open the secure form (I'll generate `SESSION_SECRET` automatically).
-3. Optionally upload a hero background video/image later — I'll ship with a generated cinematic hero image and you can swap it in `/admin`.
-
-Approve to proceed?
+Approve and I'll execute the full conversion.
