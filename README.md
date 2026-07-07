@@ -1,60 +1,80 @@
-# Lara Cinematography
+# Lara Cinematography — Cloudflare Pages CMS
 
-A luxury, editorial cinematography website with a built-in admin CMS.
-Built on Lovable (TanStack Start on Cloudflare Workers + Lovable Cloud / Postgres).
+A React + Vite static site with a lightweight admin CMS, powered entirely by
+Cloudflare Pages Functions and Cloudflare KV. No external database, no
+external storage — images are compressed to Base64 and stored in KV.
 
-## Public site
+## Tech stack
 
-- `/` – Home (hero, featured films, about, gallery preview, services, why choose, testimonials, Instagram, contact CTA)
-- `/portfolio` – Filterable films (Weddings, Engagements, Events, Commercial, Reels)
-- `/gallery` – Masonry gallery with lightbox and category filter
-- `/about` – Story, mission, approach, experience
-- `/contact` – Enquiry form + WhatsApp + contact details
-- `/sitemap.xml`, `/robots.txt`
+- React 19 + Vite + Tailwind v4 + TanStack Query
+- `react-router-dom` HashRouter
+- Cloudflare Pages Functions in `/functions`
+- Cloudflare KV binding `LARA_CINEMATOGRAPHY_KV`
+- Auth: shared `ADMIN_PASSWORD` env var + HMAC-SHA-256 signed HttpOnly cookie
 
-## Admin dashboard – `/admin`
+## Local dev
 
-Protected by a shared password stored server-side as `ADMIN_PASSWORD`.
-Session is an encrypted cookie signed with `SESSION_SECRET` (auto-generated).
+```bash
+bun install
+bun run dev                        # SPA only, /api mocked by defaults
+bun run build && bunx wrangler pages dev dist \
+  --kv LARA_CINEMATOGRAPHY_KV \
+  --binding ADMIN_PASSWORD=changeme
+```
 
-Tabs:
-- Overview – counts + recent enquiries
-- Hero – headline, subheading, CTAs, background image or video URL
-- About – portrait upload, story, mission, approach, experience
-- Services – add / edit / delete / drag-to-reorder / show or hide
-- Portfolio – add / edit / delete / drag-to-reorder / feature on home / YouTube or Vimeo embed / thumbnail
-- Gallery – bulk image upload (auto-compressed), inline alt / category / feature toggle
-- Testimonials – add / edit / delete / drag-to-reorder
-- Why Choose – editable list of icon cards
-- Contact & Social – email, phone, WhatsApp, address, hours, Instagram / Facebook / YouTube / TikTok / Vimeo
-- Footer – tagline and copyright
-- Enquiries – all submissions with delete
+## Deploy to Cloudflare Pages
 
-## Changing the admin password
+1. `bunx wrangler kv:namespace create LARA_CINEMATOGRAPHY_KV` and copy the
+   returned `id` into `wrangler.toml`.
+2. Connect the GitHub repo in the Cloudflare Pages dashboard.
+   - Framework preset: None (or Vite)
+   - Build command: `npm run build`
+   - Build output directory: `dist`
+3. Pages project → Settings → Functions → KV namespace bindings:
+   bind variable `LARA_CINEMATOGRAPHY_KV` to the namespace from step 1
+   (Production and Preview).
+4. Pages project → Settings → Environment variables: add `ADMIN_PASSWORD`
+   for Production and Preview, then redeploy.
 
-Rotate it from **Project settings → Secrets → ADMIN_PASSWORD**.
+## Admin
 
-## Deployment
+Visit `/admin` on the deployed site, sign in with `ADMIN_PASSWORD`. The
+dashboard manages hero/about/why-choose/footer copy, services, portfolio
+films, gallery images (bulk upload + drag reorder), testimonials, contact
+and social links, and enquiries.
 
-Click **Publish** in the Lovable editor. Backend (database + server functions)
-deploys automatically on save; the front-end goes live when you click Publish.
-A custom domain can be connected from **Project settings → Domains** after the
-first publish.
+## KV keys
 
-## Data model
+| Key            | Shape                                        |
+| -------------- | -------------------------------------------- |
+| site-content   | { hero, about, why_choose, footer }          |
+| settings       | { contact, social, instagram_feed }          |
+| services       | Service[]                                    |
+| portfolio      | PortfolioItem[]                              |
+| gallery        | GalleryItem[] (image_url is Base64)          |
+| testimonials   | Testimonial[]                                |
+| enquiries      | Enquiry[] (cap 1000, most recent first)      |
 
-Postgres tables managed automatically:
-`site_content`, `settings`, `services`, `portfolio`, `gallery`, `testimonials`, `enquiries`.
-All public content has public read policies; all writes go through server
-functions gated by the admin session cookie.
+If a key is empty, `functions/_lib/defaults.ts` supplies fallback content so
+a fresh deploy is fully populated.
 
-## Images
+## API
 
-Uploads are compressed client-side to ~1.4 MB max JPEG then stored as base64 in
-Postgres. Simple, permanent, no external storage config needed.
+All handlers live under `functions/`. See `functions/api/*` for the full list.
+Notable endpoints: `GET/POST /api/content`, `/api/portfolio`, `/api/gallery`,
+`/api/settings`, `/api/services`, `/api/testimonials`; `POST /api/enquiry`
+(public); `POST /api/login`, `POST /api/logout`, `GET /api/session`.
 
-## Notes for future maintenance
+## Notes on images
 
-- Any Lucide icon name (e.g. `Heart`, `Camera`, `Plane`) can be used in Services and Why Choose.
-- For video hero, set Hero → Background type to `video` and paste an mp4/webm URL.
-- Featured portfolio films appear on the homepage; featured gallery images appear in the home gallery preview.
+Uploaded via `browser-image-compression` (~1.4 MB / 1800px cap) then stored
+as `data:image/jpeg;base64,...` inside the relevant KV value. Persistent
+across redeploys. Each KV value must stay under 25 MB — the gallery holds
+all items in one value, so if you plan a large photo archive, move that
+collection to R2.
+
+## Maintenance
+
+- Rotate password: update `ADMIN_PASSWORD` in Pages env vars — all existing
+  sessions invalidate automatically.
+- Reset a section: delete its KV key in the dashboard; defaults return.

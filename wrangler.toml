@@ -1,0 +1,7 @@
+name = "lara-cinematography"
+compatibility_date = "2025-01-01"
+pages_build_output_dir = "dist"
+
+[[kv_namespaces]]
+binding = "LARA_CINEMATOGRAPHY_KV"
+id = "REPLACE_ME_WITH_YOUR_KV_NAMESPACE_ID"
