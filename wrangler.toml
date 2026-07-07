@@ -4,4 +4,4 @@ pages_build_output_dir = "dist"
 
 [[kv_namespaces]]
 binding = "LARA_CINEMATOGRAPHY_KV"
-id = "REPLACE_ME_WITH_YOUR_KV_NAMESPACE_ID"
+id = "2c3aa7d0afef4be081f86f03c041ae82"
