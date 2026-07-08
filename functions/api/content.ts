@@ -24,6 +24,8 @@ export const onRequestGet: PagesFunction<Env, string, { isAdmin?: boolean }> = a
   const portfolio = await readCollection<OrderedItem[]>(ctx.env, "portfolio");
   const gallery = await readCollection<OrderedItem[]>(ctx.env, "gallery");
   const testimonials = await readCollection<OrderedItem[]>(ctx.env, "testimonials");
+  const packages = await readCollection<OrderedItem[]>(ctx.env, "packages");
+  const addons = await readCollection<OrderedItem[]>(ctx.env, "addons");
 
   return json({
     hero: content.hero ?? {},
@@ -39,6 +41,12 @@ export const onRequestGet: PagesFunction<Env, string, { isAdmin?: boolean }> = a
     featured_portfolio: sortFeaturedFirst(portfolio, 9),
     featured_gallery: sortFeaturedFirst(gallery, 12),
     testimonials: [...testimonials].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    packages: packages
+      .filter((p) => p.active !== false)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    addons: addons
+      .filter((a) => a.active !== false)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
   });
 };
 

@@ -8,6 +8,8 @@ import type {
   GalleryItem,
   Testimonial,
   Enquiry,
+  PackageItem,
+  AddOnItem,
 } from "../../src/lib/site-types";
 
 type ContentMap = Record<string, unknown>;
@@ -92,6 +94,105 @@ export const DEFAULT_TESTIMONIALS: Testimonial[] = [
 
 export const DEFAULT_ENQUIRIES: Enquiry[] = [];
 
+export const DEFAULT_PACKAGES: PackageItem[] = [
+  {
+    id: "pkg-1",
+    name: "Essential Photography",
+    subtitle: "Half-day coverage",
+    price: "£1,450",
+    image: "",
+    badge: "",
+    description: "A refined photography-only package for intimate ceremonies and elopements.",
+    features: [
+      "Up to 6 hours coverage",
+      "One lead photographer",
+      "300+ edited images",
+      "Private online gallery",
+      "Print release included",
+    ],
+    buttonText: "Enquire Now",
+    buttonLink: "/contact",
+    active: true,
+    featured: false,
+    sort_order: 1,
+  },
+  {
+    id: "pkg-2",
+    name: "Classic Coverage",
+    subtitle: "Full-day photography",
+    price: "£2,250",
+    image: "",
+    badge: "",
+    description: "Full-day editorial photography, from morning preparations to first dances.",
+    features: [
+      "Up to 10 hours coverage",
+      "Lead photographer + assistant",
+      "500+ edited images",
+      "Engagement session",
+      "Heirloom online gallery",
+    ],
+    buttonText: "Enquire Now",
+    buttonLink: "/contact",
+    active: true,
+    featured: false,
+    sort_order: 2,
+  },
+  {
+    id: "pkg-3",
+    name: "Cinematic Duo",
+    subtitle: "Photography + Film",
+    price: "£3,850",
+    image: "",
+    badge: "Most Popular",
+    description: "Our signature pairing — a cinematic film alongside heirloom photography.",
+    features: [
+      "Full-day photo + video coverage",
+      "Two-person creative team",
+      "500+ edited images",
+      "5–7 minute highlight film",
+      "Cinematic teaser trailer",
+      "Private online gallery",
+    ],
+    buttonText: "Enquire Now",
+    buttonLink: "/contact",
+    active: true,
+    featured: true,
+    sort_order: 3,
+  },
+  {
+    id: "pkg-4",
+    name: "Ultimate Collection",
+    subtitle: "The complete experience",
+    price: "£5,650",
+    image: "",
+    badge: "",
+    description: "Every detail, every angle — the fullest, most cinematic wedding experience.",
+    features: [
+      "Two photographers + two filmmakers",
+      "Extended full-day coverage",
+      "700+ edited images",
+      "Feature-length film (15–20 min)",
+      "Highlight film + teaser",
+      "Drone coverage included",
+      "Engagement session",
+    ],
+    buttonText: "Enquire Now",
+    buttonLink: "/contact",
+    active: true,
+    featured: false,
+    sort_order: 4,
+  },
+];
+
+export const DEFAULT_ADDONS: AddOnItem[] = [
+  { id: "add-1", title: "Extended Hours", description: "Additional hours of coverage beyond your package.", price: "£250 / hr", icon: "Clock", active: true, sort_order: 1 },
+  { id: "add-2", title: "Full-Length Edited Video", description: "A longer, documentary-style edit of your full day.", price: "£850", icon: "Film", active: true, sort_order: 2 },
+  { id: "add-3", title: "Drone Coverage", description: "Licensed aerial cinematography for a cinematic sense of scale.", price: "£450", icon: "Plane", active: true, sort_order: 3 },
+  { id: "add-4", title: "Extra Photographer", description: "A second photographer for wider coverage and angles.", price: "£550", icon: "Camera", active: true, sort_order: 4 },
+  { id: "add-5", title: "Same-Day Teaser", description: "A short teaser edit delivered on the evening of your wedding.", price: "£400", icon: "Sparkles", active: true, sort_order: 5 },
+  { id: "add-6", title: "Raw Footage", description: "All original unedited photo and video files, hand-delivered.", price: "£350", icon: "HardDrive", active: true, sort_order: 6 },
+];
+
 export const DEFAULTS = {
   "site-content": DEFAULT_CONTENT,
   settings: DEFAULT_SETTINGS,
@@ -100,4 +201,6 @@ export const DEFAULTS = {
   gallery: DEFAULT_GALLERY,
   testimonials: DEFAULT_TESTIMONIALS,
   enquiries: DEFAULT_ENQUIRIES,
+  packages: DEFAULT_PACKAGES,
+  addons: DEFAULT_ADDONS,
 } as const;

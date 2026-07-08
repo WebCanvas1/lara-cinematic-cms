@@ -6,6 +6,8 @@ import type {
   GalleryItem,
   Testimonial,
   Enquiry,
+  PackageItem,
+  AddOnItem,
 } from "./site-types";
 
 export type AdminBundle = {
@@ -16,6 +18,8 @@ export type AdminBundle = {
   gallery: GalleryItem[];
   testimonials: Testimonial[];
   enquiries: Enquiry[];
+  packages: PackageItem[];
+  addons: AddOnItem[];
 };
 
 export const adminAllQuery = queryOptions({

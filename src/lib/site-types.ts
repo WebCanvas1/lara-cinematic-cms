@@ -95,6 +95,32 @@ export type Enquiry = {
   created_at: string;
 };
 
+export type PackageItem = {
+  id: string;
+  name: string;
+  subtitle: string;
+  price: string;
+  image: string;
+  badge?: string;
+  description?: string;
+  features: string[];
+  buttonText: string;
+  buttonLink?: string;
+  active: boolean;
+  featured: boolean;
+  sort_order: number;
+};
+
+export type AddOnItem = {
+  id: string;
+  title: string;
+  description: string;
+  price: string;
+  icon: string;
+  active: boolean;
+  sort_order: number;
+};
+
 export type SiteBundle = {
   hero: HeroContent;
   about: AboutContent;
@@ -107,6 +133,8 @@ export type SiteBundle = {
   featured_portfolio: PortfolioItem[];
   featured_gallery: GalleryItem[];
   testimonials: Testimonial[];
+  packages: PackageItem[];
+  addons: AddOnItem[];
 };
 
 export const PORTFOLIO_CATEGORIES = ["Weddings", "Engagements", "Events", "Commercial", "Reels"] as const;
