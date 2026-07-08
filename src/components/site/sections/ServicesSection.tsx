@@ -23,9 +23,9 @@ export function ServicesSection({ services }: { services: Service[] }) {
           </h2>
         </Reveal>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-wrap justify-center gap-4">
           {services.map((s, i) => (
-            <Reveal key={s.id} delay={(i % 3) * 0.06}>
+            <Reveal key={s.id} delay={(i % 3) * 0.06} className="w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)]">
               <div className="group flex min-h-[260px] h-full flex-col border border-border bg-background p-8 transition-colors hover:bg-cream md:p-10">
   <Icon name={s.icon} />
   <h3 className="mt-8 font-serif text-2xl leading-tight">{s.title}</h3>
