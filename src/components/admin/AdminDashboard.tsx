@@ -627,3 +627,172 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
     </div>
   );
 }
+
+// -------------- Packages --------------
+function PackagesTab({ items }: { items: PackageItem[] }) {
+  const qc = useQueryClient();
+  const up = useServerFn(upsertPackage);
+  const del = useServerFn(deletePackage);
+  const { sortedItems, onDragEnd, sensors, order } = useSortableItems(items, "packages");
+  const [editing, setEditing] = useState<Partial<PackageItem> | null>(null);
+
+  async function save(v: Partial<PackageItem>) {
+    await up({ data: {
+      id: v.id,
+      name: v.name || "Untitled",
+      subtitle: v.subtitle || "",
+      price: v.price || "",
+      image: v.image || "",
+      badge: v.badge || "",
+      description: v.description || "",
+      features: v.features || [],
+      buttonText: v.buttonText || "Enquire Now",
+      buttonLink: v.buttonLink || "/contact",
+      active: v.active ?? true,
+      featured: v.featured ?? false,
+      sort_order: v.sort_order ?? items.length,
+    }});
+    setEditing(null); qc.invalidateQueries(); toast.success("Saved");
+  }
+
+  return (
+    <div>
+      <PageHeader title="Packages" subtitle="Investment tiers shown on the homepage." actions={
+        <PrimaryButton onClick={() => setEditing({ name: "", subtitle: "", price: "", features: [], buttonText: "Enquire Now", buttonLink: "/contact", active: true, featured: false, sort_order: items.length })}>
+          <Plus className="h-3.5 w-3.5" /> New package
+        </PrimaryButton>
+      } />
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={order} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {sortedItems.map((p) => (
+              <SortableItem key={p.id} id={p.id}>
+                <div className="flex flex-wrap items-start gap-4">
+                  {p.image && <img src={p.image} alt="" className="h-20 w-28 object-cover" />}
+                  <div className="flex-1">
+                    <div className="font-serif text-lg text-ink">
+                      {p.name}
+                      {p.featured && <span className="ml-2 text-[0.65rem] uppercase tracking-widest text-gold">{p.badge || "Most Popular"}</span>}
+                      {!p.active && <span className="ml-2 text-[0.65rem] uppercase tracking-widest text-muted-foreground">Hidden</span>}
+                    </div>
+                    <div className="text-xs text-muted-foreground">{p.subtitle} · {p.price}</div>
+                    {p.description && <p className="mt-1 line-clamp-2 text-sm text-foreground/70">{p.description}</p>}
+                  </div>
+                  <div className="flex gap-2">
+                    <SecondaryButton onClick={() => setEditing(p)}>Edit</SecondaryButton>
+                    <DangerButton onClick={async () => {
+                      if (!confirm("Delete this package?")) return;
+                      await del({ data: { id: p.id } }); qc.invalidateQueries(); toast.success("Deleted");
+                    }}><Trash2 className="h-3.5 w-3.5" /></DangerButton>
+                  </div>
+                </div>
+              </SortableItem>
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {editing && <Modal onClose={() => setEditing(null)} title={editing.id ? "Edit package" : "New package"}>
+        <Field label="Name"><TextInput value={editing.name || ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
+        <Field label="Subtitle"><TextInput value={editing.subtitle || ""} onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })} /></Field>
+        <Field label="Price (e.g. £2,250)"><TextInput value={editing.price || ""} onChange={(e) => setEditing({ ...editing, price: e.target.value })} /></Field>
+        <Field label="Badge text (e.g. Most Popular)"><TextInput value={editing.badge || ""} onChange={(e) => setEditing({ ...editing, badge: e.target.value })} /></Field>
+        <Field label="Description"><TextArea rows={3} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
+        <ImagePicker label="Package image" value={editing.image || ""} onChange={(v) => setEditing({ ...editing, image: v })} />
+        <FeaturesEditor
+          features={editing.features || []}
+          onChange={(features) => setEditing({ ...editing, features })}
+        />
+        <Field label="Button text"><TextInput value={editing.buttonText || ""} onChange={(e) => setEditing({ ...editing, buttonText: e.target.value })} /></Field>
+        <Field label="Button link"><TextInput value={editing.buttonLink || ""} onChange={(e) => setEditing({ ...editing, buttonLink: e.target.value })} /></Field>
+        <div className="flex flex-wrap gap-6">
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.featured ?? false} onChange={(e) => setEditing({ ...editing, featured: e.target.checked })} /> Featured (Most Popular)</label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.active ?? true} onChange={(e) => setEditing({ ...editing, active: e.target.checked })} /> Active</label>
+        </div>
+        <div className="mt-4 flex justify-end gap-2"><SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton><PrimaryButton onClick={() => save(editing)}>Save</PrimaryButton></div>
+      </Modal>}
+    </div>
+  );
+}
+
+function FeaturesEditor({ features, onChange }: { features: string[]; onChange: (f: string[]) => void }) {
+  return (
+    <div>
+      <div className="mb-1.5 text-[0.7rem] uppercase tracking-[0.22em] text-foreground/70">Feature list</div>
+      <div className="space-y-2">
+        {features.map((f, i) => (
+          <div key={i} className="flex gap-2">
+            <TextInput value={f} onChange={(e) => onChange(features.map((x, idx) => idx === i ? e.target.value : x))} />
+            <DangerButton onClick={() => onChange(features.filter((_, idx) => idx !== i))}><Trash2 className="h-3.5 w-3.5" /></DangerButton>
+          </div>
+        ))}
+        <SecondaryButton onClick={() => onChange([...features, ""])}><Plus className="h-3.5 w-3.5" /> Add feature</SecondaryButton>
+      </div>
+    </div>
+  );
+}
+
+// -------------- Add-ons --------------
+function AddOnsTab({ items }: { items: AddOnItem[] }) {
+  const qc = useQueryClient();
+  const up = useServerFn(upsertAddon);
+  const del = useServerFn(deleteAddon);
+  const { sortedItems, onDragEnd, sensors, order } = useSortableItems(items, "addons");
+  const [editing, setEditing] = useState<Partial<AddOnItem> | null>(null);
+
+  async function save(v: Partial<AddOnItem>) {
+    await up({ data: {
+      id: v.id,
+      title: v.title || "Untitled",
+      description: v.description || "",
+      price: v.price || "",
+      icon: v.icon || "Sparkles",
+      active: v.active ?? true,
+      sort_order: v.sort_order ?? items.length,
+    }});
+    setEditing(null); qc.invalidateQueries(); toast.success("Saved");
+  }
+
+  return (
+    <div>
+      <PageHeader title="Add-ons" subtitle="Optional enhancements shown beneath the packages." actions={
+        <PrimaryButton onClick={() => setEditing({ title: "", description: "", price: "", icon: "Sparkles", active: true, sort_order: items.length })}>
+          <Plus className="h-3.5 w-3.5" /> New add-on
+        </PrimaryButton>
+      } />
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={order} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {sortedItems.map((a) => (
+              <SortableItem key={a.id} id={a.id}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="font-serif text-lg text-ink">{a.title} <span className="ml-2 text-sm text-gold">{a.price}</span></div>
+                    <div className="text-xs text-muted-foreground">{a.icon} · {a.active ? "Active" : "Hidden"}</div>
+                    <p className="mt-1 text-sm text-foreground/70">{a.description}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <SecondaryButton onClick={() => setEditing(a)}>Edit</SecondaryButton>
+                    <DangerButton onClick={async () => {
+                      if (!confirm("Delete this add-on?")) return;
+                      await del({ data: { id: a.id } }); qc.invalidateQueries(); toast.success("Deleted");
+                    }}><Trash2 className="h-3.5 w-3.5" /></DangerButton>
+                  </div>
+                </div>
+              </SortableItem>
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {editing && <Modal onClose={() => setEditing(null)} title={editing.id ? "Edit add-on" : "New add-on"}>
+        <Field label="Title"><TextInput value={editing.title || ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></Field>
+        <Field label="Description"><TextArea rows={3} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
+        <Field label="Price"><TextInput value={editing.price || ""} onChange={(e) => setEditing({ ...editing, price: e.target.value })} /></Field>
+        <Field label="Icon (any Lucide icon name, e.g. Clock, Film, Plane, Camera)"><TextInput value={editing.icon || ""} onChange={(e) => setEditing({ ...editing, icon: e.target.value })} /></Field>
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.active ?? true} onChange={(e) => setEditing({ ...editing, active: e.target.checked })} /> Active</label>
+        <div className="mt-4 flex justify-end gap-2"><SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton><PrimaryButton onClick={() => save(editing)}>Save</PrimaryButton></div>
+      </Modal>}
+    </div>
+  );
+}
