@@ -26,13 +26,13 @@ export function ServicesSection({ services }: { services: Service[] }) {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {services.map((s, i) => (
             <Reveal key={s.id} delay={(i % 3) * 0.06}>
-              <div className="group h-full border border-border bg-background p-8 transition-colors hover:bg-cream md:p-10">
-                <Icon name={s.icon} />
-                <h3 className="mt-6 font-serif text-2xl">{s.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-                  {s.description}
-                </p>
-              </div>
+              <div className="group flex min-h-[260px] h-full flex-col border border-border bg-background p-8 transition-colors hover:bg-cream md:p-10">
+  <Icon name={s.icon} />
+  <h3 className="mt-8 font-serif text-2xl leading-tight">{s.title}</h3>
+  <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+    {s.description}
+  </p>
+</div>
             </Reveal>
           ))}
         </div>
