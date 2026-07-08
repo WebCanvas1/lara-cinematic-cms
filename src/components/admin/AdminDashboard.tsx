@@ -15,14 +15,15 @@ import {
   upsertContent, upsertSettings, upsertService, deleteService,
   upsertPortfolio, deletePortfolio, upsertGalleryItem, deleteGalleryItem,
   upsertTestimonial, deleteTestimonial, reorderItems, deleteEnquiry,
+  upsertPackage, deletePackage, upsertAddon, deleteAddon,
 } from "@/lib/content.functions";
 import { lockAdmin } from "@/lib/admin.functions";
 import { compressToDataUrl } from "@/lib/image-upload";
 import { ImagePicker } from "./ImagePicker";
 import { PageHeader, Field, TextInput, TextArea, SelectInput, PrimaryButton, SecondaryButton, DangerButton, Card } from "./ui";
-import { PORTFOLIO_CATEGORIES, GALLERY_CATEGORIES, type Service, type PortfolioItem, type GalleryItem, type Testimonial } from "@/lib/site-types";
+import { PORTFOLIO_CATEGORIES, GALLERY_CATEGORIES, type Service, type PortfolioItem, type GalleryItem, type Testimonial, type PackageItem, type AddOnItem } from "@/lib/site-types";
 
-const TABS = ["Overview", "Hero", "About", "Services", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
+const TABS = ["Overview", "Hero", "About", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
 type Tab = typeof TABS[number];
 
 export function AdminDashboard() {
@@ -83,6 +84,8 @@ export function AdminDashboard() {
             {tab === "Hero" && <SectionEditor sectionKey="hero" initial={bySection(bundle.content, "hero")} table="site_content" fields={HERO_FIELDS} />}
             {tab === "About" && <SectionEditor sectionKey="about" initial={bySection(bundle.content, "about")} table="site_content" fields={ABOUT_FIELDS} />}
             {tab === "Services" && <ServicesTab services={bundle.services as Service[]} />}
+            {tab === "Packages" && <PackagesTab items={(bundle.packages ?? []) as PackageItem[]} />}
+            {tab === "Add-ons" && <AddOnsTab items={(bundle.addons ?? []) as AddOnItem[]} />}
             {tab === "Portfolio" && <PortfolioTab items={bundle.portfolio as PortfolioItem[]} />}
             {tab === "Gallery" && <GalleryTab items={bundle.gallery as GalleryItem[]} />}
             {tab === "Testimonials" && <TestimonialsTab items={bundle.testimonials as Testimonial[]} />}
@@ -227,7 +230,7 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
 }
 
 function useSortableItems<T extends { id: string }>(
-  items: T[], table: "services" | "portfolio" | "gallery" | "testimonials",
+  items: T[], table: "services" | "portfolio" | "gallery" | "testimonials" | "packages" | "addons",
 ) {
   const [order, setOrder] = useState(items.map((i) => i.id));
   useMemo(() => setOrder(items.map((i) => i.id)), [items]);
