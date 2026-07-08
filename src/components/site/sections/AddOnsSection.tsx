@@ -29,24 +29,24 @@ export function AddOnsSection({ addons }: { addons: AddOnItem[] }) {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {addons.map((a, i) => (
             <Reveal key={a.id} delay={(i % 3) * 0.06}>
-              <div className="group flex h-full flex-col border border-border bg-background p-8 transition-colors hover:bg-cream md:p-10">
-                <div className="mb-5 flex h-12 w-12 items-center justify-center border border-border bg-cream">
-                  <Icon name={a.icon} />
-                </div>
+              <div className="group flex min-h-[240px] h-full flex-col border border-border bg-background p-8 transition-colors hover:bg-cream md:p-10">
+  <div className="mb-8 flex h-12 w-12 items-center justify-center border border-border bg-cream">
+    <Icon name={a.icon} />
+  </div>
 
-                <div className="flex items-start justify-between gap-4">
-                  <h3 className="font-serif text-xl text-ink">{a.title}</h3>
-                  <span className="whitespace-nowrap font-serif text-lg text-gold">
-                    {a.price}
-                  </span>
-                </div>
+  <div className="flex items-start justify-between gap-4">
+    <h3 className="font-serif text-xl leading-tight text-ink">{a.title}</h3>
+    <span className="whitespace-nowrap font-serif text-lg text-gold">
+      {a.price}
+    </span>
+  </div>
 
-                {a.description && (
-                  <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-                    {a.description}
-                  </p>
-                )}
-              </div>
+  {a.description && (
+    <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+      {a.description}
+    </p>
+  )}
+</div>
             </Reveal>
           ))}
         </div>
