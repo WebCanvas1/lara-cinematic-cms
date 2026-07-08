@@ -5,6 +5,8 @@ import type {
   PortfolioItem,
   GalleryItem,
   Testimonial,
+  PackageItem,
+  AddOnItem,
 } from "./site-types";
 
 type Result = { ok: true };
@@ -42,10 +44,22 @@ export const upsertTestimonial = ({ data }: { data: Partial<Testimonial> }) =>
 export const deleteTestimonial = ({ data }: { data: { id: string } }) =>
   api.post<Result>("/api/testimonials", { action: "delete", id: data.id });
 
+export const upsertPackage = ({ data }: { data: Partial<PackageItem> }) =>
+  api.post<Result>("/api/packages", { action: "upsert", item: data });
+
+export const deletePackage = ({ data }: { data: { id: string } }) =>
+  api.post<Result>("/api/packages", { action: "delete", id: data.id });
+
+export const upsertAddon = ({ data }: { data: Partial<AddOnItem> }) =>
+  api.post<Result>("/api/addons", { action: "upsert", item: data });
+
+export const deleteAddon = ({ data }: { data: { id: string } }) =>
+  api.post<Result>("/api/addons", { action: "delete", id: data.id });
+
 export const reorderItems = ({
   data,
 }: {
-  data: { table: "services" | "portfolio" | "gallery" | "testimonials"; ids: string[] };
+  data: { table: "services" | "portfolio" | "gallery" | "testimonials" | "packages" | "addons"; ids: string[] };
 }) => api.post<Result>(`/api/${data.table}`, { action: "reorder", ids: data.ids });
 
 export const deleteEnquiry = ({ data }: { data: { id: string } }) =>
