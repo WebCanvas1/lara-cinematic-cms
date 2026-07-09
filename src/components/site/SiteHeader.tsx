@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import logoAsset from "@/assets/lara-logo.png.asset.json";
+import laraLogo from "@/assets/lara-logo.png";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -13,14 +13,20 @@ const navItems = [
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="container-editorial flex items-center justify-between py-5">
-        <Link to="/" className="group flex items-center" onClick={() => setOpen(false)} aria-label="Lara Cinematography — Home">
+      <div className="container-editorial flex items-center justify-between py-4">
+        <Link
+          to="/"
+          className="group flex items-center"
+          onClick={() => setOpen(false)}
+          aria-label="Lara Cinematography — Home"
+        >
           <img
-            src={logoAsset.url}
+            src={laraLogo}
             alt="Lara Cinematography"
-            className="h-auto w-[58px] object-contain md:w-[80px]"
+            className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105 md:h-20"
           />
         </Link>
 
@@ -36,6 +42,7 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
+
           <Link
             to="/contact"
             className="rounded-full border border-ink px-6 py-2 text-[0.72rem] uppercase tracking-[0.24em] text-ink transition-all hover:bg-ink hover:text-cream"
