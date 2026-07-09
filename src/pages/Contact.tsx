@@ -107,7 +107,7 @@ export default function Contact() {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="inline-flex items-center gap-2 bg-ink px-8 py-4 text-[0.72rem] uppercase tracking-[0.28em] text-background transition-all hover:bg-gold disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full bg-ink px-9 py-4 text-[0.72rem] uppercase tracking-[0.28em] text-cream shadow-md shadow-ink/20 transition-all hover:bg-gold disabled:opacity-60"
                 >
                   {pending ? "Sending…" : "Submit Enquiry"}
                 </button>
@@ -115,7 +115,7 @@ export default function Contact() {
                   <a
                     href={`https://wa.me/${wa.replace(/^\+/, "")}`}
                     target="_blank" rel="noreferrer"
-                    className="inline-flex items-center gap-2 border border-ink px-8 py-4 text-[0.72rem] uppercase tracking-[0.28em] text-ink hover:bg-ink hover:text-background"
+                    className="inline-flex items-center gap-2 rounded-full border border-ink px-9 py-4 text-[0.72rem] uppercase tracking-[0.28em] text-ink hover:bg-ink hover:text-cream"
                   >
                     <MessageCircle className="h-4 w-4" /> WhatsApp
                   </a>
@@ -135,7 +135,7 @@ function Field({
   label: string; name: string; type?: string; required?: boolean;
   as?: "textarea" | "select"; options?: string[]; rows?: number;
 }) {
-  const base = "w-full border border-border bg-transparent px-4 py-3 text-sm text-ink focus:border-gold focus:outline-none";
+  const base = "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-ink focus:border-gold focus:outline-none";
   return (
     <label className="block">
       <span className="mb-2 block text-[0.7rem] uppercase tracking-[0.24em] text-foreground/70">
