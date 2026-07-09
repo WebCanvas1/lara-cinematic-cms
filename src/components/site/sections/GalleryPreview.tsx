@@ -22,7 +22,7 @@ export function GalleryPreview({ items }: { items: GalleryItem[] }) {
               delay={i * 0.05}
               className={i % 5 === 0 ? "md:row-span-2" : ""}
             >
-              <div className="group relative h-full overflow-hidden bg-mist">
+              <div className="group relative h-full overflow-hidden rounded-2xl bg-mist shadow-sm">
                 <img
                   src={item.image_url}
                   alt={item.alt || "Gallery image"}

@@ -21,7 +21,7 @@ export function VideoEmbed({
 
   if (active && src) {
     return (
-      <div className="relative aspect-video overflow-hidden bg-ink">
+      <div className="relative aspect-video overflow-hidden rounded-2xl bg-ink">
         <iframe
           src={src}
           title={title}
@@ -37,7 +37,7 @@ export function VideoEmbed({
     <button
       type="button"
       onClick={() => src && setActive(true)}
-      className="group relative block aspect-video w-full overflow-hidden bg-mist"
+      className="group relative block aspect-video w-full overflow-hidden rounded-2xl bg-mist shadow-md shadow-ink/10 transition-shadow hover:shadow-lg hover:shadow-ink/20"
       disabled={!src}
     >
       {thumbnail ? (

@@ -14,7 +14,7 @@ export function ContactCta() {
         <div className="mt-10">
           <Link
             to="/contact"
-            className="inline-flex items-center gap-3 border border-white/70 px-8 py-4 text-[0.72rem] uppercase tracking-[0.28em] text-white transition-all hover:bg-white hover:text-ink"
+            className="inline-flex items-center gap-3 rounded-full border border-cream/70 px-9 py-4 text-[0.72rem] uppercase tracking-[0.28em] text-cream transition-all hover:bg-cream hover:text-ink"
           >
             Enquire Now
           </Link>

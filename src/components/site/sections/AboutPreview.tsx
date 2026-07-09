@@ -10,8 +10,8 @@ export function AboutPreview({ about }: { about: AboutContent }) {
       <div className="container-editorial grid gap-16 md:grid-cols-12 md:gap-20">
         <Reveal className="md:col-span-5">
           <div className="relative">
-            <img src={portrait} alt={about.name} className="w-full object-cover" loading="lazy" />
-            <div className="absolute -bottom-4 -right-4 hidden h-24 w-24 border border-gold md:block" />
+            <img src={portrait} alt={about.name} className="w-full rounded-3xl object-cover shadow-lg shadow-ink/10" loading="lazy" />
+            <div className="absolute -bottom-4 -right-4 hidden h-24 w-24 rounded-3xl border border-gold md:block" />
           </div>
         </Reveal>
         <Reveal delay={0.15} className="md:col-span-7 md:pt-12">
