@@ -34,7 +34,7 @@ export function SiteHeader() {
           ))}
           <Link
             to="/contact"
-            className="border border-ink px-5 py-2 text-[0.72rem] uppercase tracking-[0.24em] text-ink transition-all hover:bg-ink hover:text-background"
+            className="rounded-full border border-ink px-6 py-2 text-[0.72rem] uppercase tracking-[0.24em] text-ink transition-all hover:bg-ink hover:text-cream"
           >
             Enquire
           </Link>

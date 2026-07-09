@@ -22,17 +22,17 @@ export function PackagesSection({ packages }: { packages: PackageItem[] }) {
           {packages.map((p, i) => (
             <Reveal key={p.id} delay={(i % 4) * 0.06}>
               <article
-                className={`relative flex h-full flex-col overflow-hidden border bg-background shadow-[0_20px_60px_-30px_rgba(17,17,17,0.18)] transition-transform duration-500 hover:-translate-y-1 ${
+                className={`relative flex h-full flex-col overflow-hidden rounded-3xl border bg-card shadow-[0_20px_60px_-30px_rgba(31,23,19,0.22)] transition-transform duration-500 hover:-translate-y-1 ${
                   p.featured ? "border-gold" : "border-border"
                 }`}
               >
                 {p.featured && (
-                  <div className="absolute right-0 top-6 z-10 bg-gold px-4 py-1.5 text-[0.6rem] uppercase tracking-[0.28em] text-background shadow-md">
+                  <div className="absolute right-4 top-6 z-10 rounded-full bg-gold px-4 py-1.5 text-[0.6rem] uppercase tracking-[0.28em] text-cream shadow-md">
                     {p.badge || "Most Popular"}
                   </div>
                 )}
                 {!p.featured && p.badge && (
-                  <div className="absolute right-0 top-6 z-10 bg-ink px-4 py-1.5 text-[0.6rem] uppercase tracking-[0.28em] text-background shadow-md">
+                  <div className="absolute right-4 top-6 z-10 rounded-full bg-ink px-4 py-1.5 text-[0.6rem] uppercase tracking-[0.28em] text-cream shadow-md">
                     {p.badge}
                   </div>
                 )}
@@ -85,10 +85,10 @@ export function PackagesSection({ packages }: { packages: PackageItem[] }) {
 }
 
 function PkgButton({ href, featured, children }: { href: string; featured: boolean; children: React.ReactNode }) {
-  const base = "block w-full py-3 text-center text-[0.7rem] uppercase tracking-[0.28em] transition-colors";
+  const base = "block w-full rounded-full py-3.5 text-center text-[0.7rem] uppercase tracking-[0.28em] transition-colors";
   const cls = featured
-    ? `${base} bg-ink text-background hover:bg-gold`
-    : `${base} border border-ink text-ink hover:bg-ink hover:text-background`;
+    ? `${base} bg-ink text-cream hover:bg-gold`
+    : `${base} border border-ink text-ink hover:bg-ink hover:text-cream`;
   const isExternal = /^https?:\/\//.test(href);
   if (isExternal) return <a href={href} className={cls}>{children}</a>;
   return <Link to={href} className={cls}>{children}</Link>;

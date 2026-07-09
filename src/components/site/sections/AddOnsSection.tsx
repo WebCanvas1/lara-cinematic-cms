@@ -29,8 +29,8 @@ export function AddOnsSection({ addons }: { addons: AddOnItem[] }) {
         <div className="flex flex-wrap justify-center gap-4">
           {addons.map((a, i) => (
             <Reveal key={a.id} delay={(i % 3) * 0.06} className="w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)]">
-              <div className="group flex min-h-[240px] h-full flex-col border border-border bg-background p-8 transition-colors hover:bg-cream md:p-10">
-  <div className="mb-8 flex h-12 w-12 items-center justify-center border border-border bg-cream">
+              <div className="group flex min-h-[240px] h-full flex-col rounded-2xl border border-border bg-card p-8 transition-colors hover:bg-cream md:p-10">
+  <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-cream">
     <Icon name={a.icon} />
   </div>
 

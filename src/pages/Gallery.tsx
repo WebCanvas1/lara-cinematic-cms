@@ -33,8 +33,8 @@ export default function Gallery() {
               <button
                 key={c}
                 onClick={() => setCat(c)}
-                className={`border px-5 py-2 text-[0.7rem] uppercase tracking-[0.24em] transition-all ${
-                  cat === c ? "border-ink bg-ink text-background" : "border-border text-foreground/70 hover:border-ink"
+                className={`rounded-full border px-6 py-2 text-[0.7rem] uppercase tracking-[0.24em] transition-all ${
+                  cat === c ? "border-ink bg-ink text-cream" : "border-border text-foreground/70 hover:border-ink"
                 }`}
               >
                 {c}
@@ -50,7 +50,7 @@ export default function Gallery() {
                 <button
                   key={g.id}
                   onClick={() => setIdx(i)}
-                  className="group mb-3 block w-full overflow-hidden md:mb-5"
+                  className="group mb-3 block w-full overflow-hidden rounded-2xl shadow-sm md:mb-5"
                 >
                   <img
                     src={g.image_url}

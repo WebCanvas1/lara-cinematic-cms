@@ -40,14 +40,14 @@ export function HeroSection({ hero }: { hero: HeroContent }) {
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link
               to={hero.cta_primary_href || "/portfolio"}
-              className="group inline-flex items-center gap-3 bg-white px-7 py-3.5 text-[0.72rem] uppercase tracking-[0.28em] text-ink transition-all hover:bg-gold hover:text-white"
+              className="group inline-flex items-center gap-3 rounded-full bg-cream px-8 py-3.5 text-[0.72rem] uppercase tracking-[0.28em] text-ink shadow-lg shadow-ink/10 transition-all hover:bg-gold hover:text-cream"
             >
               {hero.cta_primary_label}
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               to={hero.cta_secondary_href || "/contact"}
-              className="inline-flex items-center gap-2 border border-white/70 px-7 py-3.5 text-[0.72rem] uppercase tracking-[0.28em] text-white transition-all hover:bg-white hover:text-ink"
+              className="inline-flex items-center gap-2 rounded-full border border-cream/70 px-8 py-3.5 text-[0.72rem] uppercase tracking-[0.28em] text-cream transition-all hover:bg-cream hover:text-ink"
             >
               {hero.cta_secondary_label}
             </Link>

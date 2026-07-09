@@ -34,8 +34,8 @@ export default function Portfolio() {
               <button
                 key={c}
                 onClick={() => setCat(c)}
-                className={`border px-5 py-2 text-[0.7rem] uppercase tracking-[0.24em] transition-all ${
-                  cat === c ? "border-ink bg-ink text-background" : "border-border text-foreground/70 hover:border-ink"
+                className={`rounded-full border px-6 py-2 text-[0.7rem] uppercase tracking-[0.24em] transition-all ${
+                  cat === c ? "border-ink bg-ink text-cream" : "border-border text-foreground/70 hover:border-ink"
                 }`}
               >
                 {c}
