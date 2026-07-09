@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import logoAsset from "@/assets/lara-logo.png.asset.json";
 
 const navItems = [
   { to: "/", label: "Home" },
@@ -15,9 +16,12 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="container-editorial flex items-center justify-between py-5">
-        <Link to="/" className="group flex items-baseline gap-2" onClick={() => setOpen(false)}>
-          <span className="font-serif text-xl tracking-wide text-ink">Lara</span>
-          <span className="eyebrow">Cinematography</span>
+        <Link to="/" className="group flex items-center" onClick={() => setOpen(false)} aria-label="Lara Cinematography — Home">
+          <img
+            src={logoAsset.url}
+            alt="Lara Cinematography"
+            className="h-auto w-[58px] object-contain md:w-[80px]"
+          />
         </Link>
 
         <nav className="hidden items-center gap-10 md:flex">

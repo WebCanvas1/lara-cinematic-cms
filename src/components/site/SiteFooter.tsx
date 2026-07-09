@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Instagram, Facebook, Youtube, Music2, Video } from "lucide-react";
 import type { ContactSettings, FooterContent, SocialSettings } from "@/lib/site-types";
+import logoAsset from "@/assets/lara-logo.png.asset.json";
 
 export function SiteFooter({
   footer, contact, social,
@@ -16,11 +17,10 @@ export function SiteFooter({
     <footer className="border-t border-border bg-cream mt-24">
       <div className="container-editorial grid gap-12 py-16 md:grid-cols-4">
         <div className="md:col-span-2">
-          <div className="flex items-baseline gap-2">
-            <span className="font-serif text-2xl text-ink">Lara</span>
-            <span className="eyebrow">Cinematography</span>
-          </div>
-          <p className="mt-4 max-w-sm font-serif text-lg italic leading-relaxed text-foreground/80">
+          <Link to="/" aria-label="Lara Cinematography — Home" className="inline-block">
+            <img src={logoAsset.url} alt="Lara Cinematography" className="h-auto w-[96px] object-contain" />
+          </Link>
+          <p className="mt-6 max-w-sm font-serif text-lg italic leading-relaxed text-foreground/80">
             {footer.tagline}
           </p>
         </div>
