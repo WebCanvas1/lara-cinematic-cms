@@ -11,6 +11,7 @@ import type {
   PackageItem,
   AddOnItem,
 } from "../../src/lib/site-types";
+import { DEFAULT_HOMEPAGE_SECTIONS, type HomepageSection } from "../../src/lib/site-types";
 
 type ContentMap = Record<string, unknown>;
 type SettingsMap = Record<string, unknown>;
