@@ -1,5 +1,6 @@
 import { json, error, readJson, requireAdmin, type Ctx, type Env } from "../_lib/env";
 import { readCollection, writeCollection } from "../_lib/kv";
+import type { HomepageSection } from "../../src/lib/site-types";
 
 type ContentMap = Record<string, unknown>;
 type OrderedItem = Record<string, unknown> & {
@@ -26,6 +27,7 @@ export const onRequestGet: PagesFunction<Env, string, { isAdmin?: boolean }> = a
   const testimonials = await readCollection<OrderedItem[]>(ctx.env, "testimonials");
   const packages = await readCollection<OrderedItem[]>(ctx.env, "packages");
   const addons = await readCollection<OrderedItem[]>(ctx.env, "addons");
+  const layout = await readCollection<HomepageSection[]>(ctx.env, "homepage-layout");
 
   return json({
     hero: content.hero ?? {},
@@ -47,6 +49,7 @@ export const onRequestGet: PagesFunction<Env, string, { isAdmin?: boolean }> = a
     addons: addons
       .filter((a) => a.active !== false)
       .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
+    layout: [...layout].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
   });
 };
 
