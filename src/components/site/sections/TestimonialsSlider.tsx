@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import type { Testimonial } from "@/lib/site-types";
+import type { Testimonial, HeadingConfig } from "@/lib/site-types";
+import { mergeHeading } from "./section-heading";
 
-export function TestimonialsSlider({ items }: { items: Testimonial[] }) {
+export function TestimonialsSlider({ items, heading }: { items: Testimonial[]; heading?: HeadingConfig }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (items.length < 2) return;
@@ -11,10 +12,19 @@ export function TestimonialsSlider({ items }: { items: Testimonial[] }) {
   }, [items.length]);
   if (!items.length) return null;
   const t = items[i];
+  const h = mergeHeading(heading, { eyebrow: "Kind Words" });
   return (
     <section className="bg-cream py-24 md:py-32">
       <div className="container-editorial mx-auto max-w-3xl text-center">
-        <div className="eyebrow mb-8">Kind Words</div>
+        <div className={`mb-8 ${h.wrapperCls}`} style={h.wrapperStyle}>
+          {h.showEyebrow && <div className="eyebrow" style={h.eyebrowStyle}>{h.eyebrow}</div>}
+          {h.showTitle && h.title && (
+            <h2 className="mt-4 font-serif text-3xl md:text-4xl" style={h.titleStyle}>{h.title}</h2>
+          )}
+          {h.showSubtitle && h.subtitle && (
+            <p className="mt-3 text-sm leading-relaxed text-foreground/70" style={h.subtitleStyle}>{h.subtitle}</p>
+          )}
+        </div>
         <AnimatePresence mode="wait">
           <motion.blockquote
             key={t.id}

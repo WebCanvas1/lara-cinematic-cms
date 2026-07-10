@@ -1,18 +1,23 @@
 import { Link } from "@tanstack/react-router";
 import { Reveal } from "../Reveal";
-import type { GalleryItem } from "@/lib/site-types";
+import type { GalleryItem, HeadingConfig } from "@/lib/site-types";
+import { mergeHeading } from "./section-heading";
 
-export function GalleryPreview({ items }: { items: GalleryItem[] }) {
+export function GalleryPreview({ items, heading }: { items: GalleryItem[]; heading?: HeadingConfig }) {
   if (!items.length) return null;
   const shown = items.slice(0, 6);
+  const h = mergeHeading(heading, { eyebrow: "Gallery", title: "A quieter kind of storytelling." });
   return (
     <section className="bg-cream py-24 md:py-32">
       <div className="container-editorial">
-        <Reveal className="mb-14 text-center">
-          <div className="eyebrow mb-4">Gallery</div>
-          <h2 className="mx-auto max-w-2xl font-serif text-4xl md:text-5xl">
-            A quieter kind of storytelling.
-          </h2>
+        <Reveal className="mb-14">
+          <div className={`mx-auto max-w-2xl ${h.wrapperCls}`} style={h.wrapperStyle}>
+            {h.showEyebrow && <div className="eyebrow mb-4" style={h.eyebrowStyle}>{h.eyebrow}</div>}
+            {h.showTitle && <h2 className="font-serif text-4xl md:text-5xl" style={h.titleStyle}>{h.title}</h2>}
+            {h.showSubtitle && (
+              <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/70" style={h.subtitleStyle}>{h.subtitle}</p>
+            )}
+          </div>
         </Reveal>
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
