@@ -1,19 +1,28 @@
 import { Reveal } from "../Reveal";
 import { VideoEmbed } from "../VideoEmbed";
 import { Link } from "@tanstack/react-router";
-import type { PortfolioItem } from "@/lib/site-types";
+import type { PortfolioItem, HeadingConfig } from "@/lib/site-types";
+import { mergeHeading } from "./section-heading";
 
-export function FeaturedFilms({ films }: { films: PortfolioItem[] }) {
+export function FeaturedFilms({ films, heading }: { films: PortfolioItem[]; heading?: HeadingConfig }) {
   if (!films.length) return null;
+  const h = mergeHeading(heading, {
+    eyebrow: "Featured Films",
+    title: "Stories told frame by frame.",
+    align: "left",
+  });
   return (
     <section className="bg-background py-24 md:py-32">
       <div className="container-editorial">
         <Reveal className="mb-16 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
-          <div>
-            <div className="eyebrow mb-4">Featured Films</div>
-            <h2 className="max-w-2xl font-serif text-4xl leading-tight md:text-5xl">
-              Stories told frame by frame.
-            </h2>
+          <div className={h.wrapperCls} style={h.wrapperStyle}>
+            {h.showEyebrow && <div className="eyebrow mb-4" style={h.eyebrowStyle}>{h.eyebrow}</div>}
+            {h.showTitle && (
+              <h2 className="max-w-2xl font-serif text-4xl leading-tight md:text-5xl" style={h.titleStyle}>{h.title}</h2>
+            )}
+            {h.showSubtitle && (
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-foreground/70" style={h.subtitleStyle}>{h.subtitle}</p>
+            )}
           </div>
           <Link
             to="/portfolio"

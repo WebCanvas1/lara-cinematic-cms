@@ -15,15 +15,15 @@ import {
   upsertContent, upsertSettings, upsertService, deleteService,
   upsertPortfolio, deletePortfolio, upsertGalleryItem, deleteGalleryItem,
   upsertTestimonial, deleteTestimonial, reorderItems, deleteEnquiry,
-  upsertPackage, deletePackage, upsertAddon, deleteAddon,
+  upsertPackage, deletePackage, upsertAddon, deleteAddon, saveHomepageLayout,
 } from "@/lib/content.functions";
 import { lockAdmin } from "@/lib/admin.functions";
 import { compressToDataUrl } from "@/lib/image-upload";
 import { ImagePicker } from "./ImagePicker";
 import { PageHeader, Field, TextInput, TextArea, SelectInput, PrimaryButton, SecondaryButton, DangerButton, Card } from "./ui";
-import { PORTFOLIO_CATEGORIES, GALLERY_CATEGORIES, type Service, type PortfolioItem, type GalleryItem, type Testimonial, type PackageItem, type AddOnItem } from "@/lib/site-types";
+import { PORTFOLIO_CATEGORIES, GALLERY_CATEGORIES, DEFAULT_HOMEPAGE_SECTIONS, type Service, type PortfolioItem, type GalleryItem, type Testimonial, type PackageItem, type AddOnItem, type HomepageSection, type HeadingConfig } from "@/lib/site-types";
 
-const TABS = ["Overview", "Hero", "About", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
+const TABS = ["Overview", "Homepage Layout", "Hero", "About", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
 type Tab = typeof TABS[number];
 
 export function AdminDashboard() {
@@ -81,6 +81,7 @@ export function AdminDashboard() {
         ) : (
           <>
             {tab === "Overview" && <Overview bundle={bundle} />}
+            {tab === "Homepage Layout" && <HomepageLayoutTab items={((bundle as any).layout ?? []) as HomepageSection[]} />}
             {tab === "Hero" && <SectionEditor sectionKey="hero" initial={bySection(bundle.content, "hero")} table="site_content" fields={HERO_FIELDS} />}
             {tab === "About" && <SectionEditor sectionKey="about" initial={bySection(bundle.content, "about")} table="site_content" fields={ABOUT_FIELDS} />}
             {tab === "Services" && <ServicesTab services={bundle.services as Service[]} />}
@@ -794,5 +795,267 @@ function AddOnsTab({ items }: { items: AddOnItem[] }) {
         <div className="mt-4 flex justify-end gap-2"><SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton><PrimaryButton onClick={() => save(editing)}>Save</PrimaryButton></div>
       </Modal>}
     </div>
+  );
+}
+// -------------- Homepage Layout --------------
+function HomepageLayoutTab({ items }: { items: HomepageSection[] }) {
+  const qc = useQueryClient();
+  const save = useServerFn(saveHomepageLayout);
+  const initial = useMemo<HomepageSection[]>(() => {
+    const byId = new Map((items || []).map((s) => [s.id, s]));
+    const merged: HomepageSection[] = DEFAULT_HOMEPAGE_SECTIONS.map((def, idx) => {
+      const stored = byId.get(def.id);
+      byId.delete(def.id);
+      return stored
+        ? { ...def, ...stored, heading: { ...(stored.heading || {}) }, sort_order: stored.sort_order ?? idx + 1 }
+        : { ...def, sort_order: idx + 1 };
+    });
+    let n = merged.length + 1;
+    byId.forEach((extra) => merged.push({ ...extra, sort_order: extra.sort_order ?? n++ }));
+    return [...merged].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  }, [items]);
+  const [layout, setLayout] = useState<HomepageSection[]>(initial);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  function onDragEnd(e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const oldIndex = layout.findIndex((s) => s.id === active.id);
+    const newIndex = layout.findIndex((s) => s.id === over.id);
+    const next = arrayMove(layout, oldIndex, newIndex).map((s, i) => ({ ...s, sort_order: i + 1 }));
+    setLayout(next); setDirty(true);
+  }
+
+  function updateSection(id: string, patch: Partial<HomepageSection>) {
+    setLayout((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+    setDirty(true);
+  }
+  function updateHeading(id: string, patch: Partial<HeadingConfig>) {
+    setLayout((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, heading: { ...(s.heading || {}), ...patch } } : s)),
+    );
+    setDirty(true);
+  }
+
+  async function persist() {
+    try {
+      await save({ data: { items: layout } });
+      setDirty(false);
+      toast.success("Homepage layout saved");
+      qc.invalidateQueries();
+    } catch {
+      toast.error("Could not save layout");
+    }
+  }
+
+  function resetDefaults() {
+    if (!confirm("Reset the homepage layout to defaults?")) return;
+    setLayout(DEFAULT_HOMEPAGE_SECTIONS.map((s) => ({ ...s, heading: {} })));
+    setDirty(true);
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Homepage Layout"
+        subtitle="Reorder, hide, or restyle every section shown on the homepage."
+        actions={
+          <>
+            <SecondaryButton onClick={resetDefaults}>Reset</SecondaryButton>
+            <PrimaryButton onClick={persist} disabled={!dirty}>
+              <Save className="h-3.5 w-3.5" /> {dirty ? "Save layout" : "Saved"}
+            </PrimaryButton>
+          </>
+        }
+      />
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={layout.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {layout.map((s) => (
+              <SortableItem key={s.id} id={s.id}>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="font-serif text-lg text-ink">{s.label}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Position {s.sort_order} · {s.enabled ? "Visible" : "Hidden"}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-xs uppercase tracking-widest text-foreground/70">
+                      <input
+                        type="checkbox"
+                        checked={s.enabled}
+                        onChange={(e) => updateSection(s.id, { enabled: e.target.checked })}
+                      />
+                      Show
+                    </label>
+                    <SecondaryButton onClick={() => setExpanded(expanded === s.id ? null : s.id)}>
+                      {expanded === s.id ? "Close" : "Edit heading"}
+                    </SecondaryButton>
+                  </div>
+                </div>
+                {expanded === s.id && (
+                  <HeadingEditor
+                    heading={s.heading || {}}
+                    onChange={(patch) => updateHeading(s.id, patch)}
+                  />
+                )}
+              </SortableItem>
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+      <div className="mt-6 flex justify-end">
+        <PrimaryButton onClick={persist} disabled={!dirty}>
+          <Save className="h-3.5 w-3.5" /> {dirty ? "Save layout" : "Saved"}
+        </PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+function HeadingEditor({
+  heading,
+  onChange,
+}: {
+  heading: HeadingConfig;
+  onChange: (patch: Partial<HeadingConfig>) => void;
+}) {
+  const showHeading = heading.showHeading !== false;
+  const showSubtitle = heading.showSubtitle !== false;
+  return (
+    <div className="mt-4 space-y-4 rounded-2xl border border-border bg-cream/50 p-5">
+      <div className="grid gap-3 md:grid-cols-3">
+        <Field label="Eyebrow text">
+          <TextInput
+            value={heading.eyebrow || ""}
+            onChange={(e) => onChange({ eyebrow: e.target.value })}
+            placeholder="Leave blank for default"
+          />
+        </Field>
+        <Field label="Main heading">
+          <TextInput
+            value={heading.title || ""}
+            onChange={(e) => onChange({ title: e.target.value })}
+            placeholder="Leave blank for default"
+          />
+        </Field>
+        <Field label="Subheading / description">
+          <TextInput
+            value={heading.subtitle || ""}
+            onChange={(e) => onChange({ subtitle: e.target.value })}
+          />
+        </Field>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <Field label="Eyebrow font size (px)">
+          <TextInput
+            type="number"
+            value={heading.eyebrowFontSize ?? ""}
+            onChange={(e) => onChange({ eyebrowFontSize: e.target.value ? Number(e.target.value) : undefined })}
+          />
+        </Field>
+        <Field label="Heading font size (px)">
+          <TextInput
+            type="number"
+            value={heading.titleFontSize ?? ""}
+            onChange={(e) => onChange({ titleFontSize: e.target.value ? Number(e.target.value) : undefined })}
+          />
+        </Field>
+        <Field label="Subheading font size (px)">
+          <TextInput
+            type="number"
+            value={heading.subtitleFontSize ?? ""}
+            onChange={(e) => onChange({ subtitleFontSize: e.target.value ? Number(e.target.value) : undefined })}
+          />
+        </Field>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <ColorField label="Eyebrow colour" value={heading.eyebrowColor} onChange={(v) => onChange({ eyebrowColor: v })} />
+        <ColorField label="Heading colour" value={heading.titleColor} onChange={(v) => onChange({ titleColor: v })} />
+        <ColorField label="Subheading colour" value={heading.subtitleColor} onChange={(v) => onChange({ subtitleColor: v })} />
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <Field label="Font weight">
+          <SelectInput
+            value={heading.fontWeight || ""}
+            onChange={(e) => onChange({ fontWeight: e.target.value || undefined })}
+          >
+            <option value="">Default</option>
+            <option value="300">Light (300)</option>
+            <option value="400">Regular (400)</option>
+            <option value="500">Medium (500)</option>
+            <option value="600">Semibold (600)</option>
+            <option value="700">Bold (700)</option>
+            <option value="800">Extra bold (800)</option>
+          </SelectInput>
+        </Field>
+        <Field label="Text alignment">
+          <SelectInput
+            value={heading.textAlign || ""}
+            onChange={(e) => onChange({ textAlign: (e.target.value || undefined) as HeadingConfig["textAlign"] })}
+          >
+            <option value="">Default</option>
+            <option value="left">Left</option>
+            <option value="center">Centre</option>
+            <option value="right">Right</option>
+          </SelectInput>
+        </Field>
+        <Field label="Max content width (e.g. 900px)">
+          <TextInput
+            value={heading.maxWidth || ""}
+            onChange={(e) => onChange({ maxWidth: e.target.value || undefined })}
+            placeholder="Leave blank for default"
+          />
+        </Field>
+      </div>
+
+      <div className="flex flex-wrap gap-6">
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={showHeading}
+            onChange={(e) => onChange({ showHeading: e.target.checked })}
+          />
+          Show heading
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={showSubtitle}
+            onChange={(e) => onChange({ showSubtitle: e.target.checked })}
+          />
+          Show subheading
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function ColorField({
+  label, value, onChange,
+}: { label: string; value?: string; onChange: (v: string | undefined) => void }) {
+  const v = value || "";
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={v || "#000000"}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-10 w-12 cursor-pointer rounded-lg border border-border bg-card"
+        />
+        <TextInput
+          value={v}
+          onChange={(e) => onChange(e.target.value || undefined)}
+          placeholder="#000000 or blank"
+        />
+      </div>
+    </Field>
   );
 }

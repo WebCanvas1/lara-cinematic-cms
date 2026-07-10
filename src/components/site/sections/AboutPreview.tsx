@@ -1,10 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { Reveal } from "../Reveal";
 import portraitDefault from "@/assets/portrait.jpg";
-import type { AboutContent } from "@/lib/site-types";
+import type { AboutContent, HeadingConfig } from "@/lib/site-types";
+import { mergeHeading } from "./section-heading";
 
-export function AboutPreview({ about }: { about: AboutContent }) {
+export function AboutPreview({ about, heading }: { about: AboutContent; heading?: HeadingConfig }) {
   const portrait = about.portrait_url || portraitDefault;
+  const h = mergeHeading(heading, {
+    eyebrow: "About",
+    title: about.tagline || "Cinematographer & Storyteller",
+    align: "left",
+  });
   return (
     <section className="bg-background py-24 md:py-32">
       <div className="container-editorial grid gap-16 md:grid-cols-12 md:gap-20">
@@ -15,10 +21,15 @@ export function AboutPreview({ about }: { about: AboutContent }) {
           </div>
         </Reveal>
         <Reveal delay={0.15} className="md:col-span-7 md:pt-12">
-          <div className="eyebrow mb-4">About</div>
-          <h2 className="font-serif text-4xl leading-tight md:text-5xl">
-            {about.tagline || "Cinematographer & Storyteller"}
-          </h2>
+          <div className={h.wrapperCls} style={h.wrapperStyle}>
+            {h.showEyebrow && <div className="eyebrow mb-4" style={h.eyebrowStyle}>{h.eyebrow}</div>}
+            {h.showTitle && (
+              <h2 className="font-serif text-4xl leading-tight md:text-5xl" style={h.titleStyle}>{h.title}</h2>
+            )}
+            {h.showSubtitle && (
+              <p className="mt-4 text-base leading-relaxed text-foreground/70" style={h.subtitleStyle}>{h.subtitle}</p>
+            )}
+          </div>
           <p className="mt-8 whitespace-pre-line text-base leading-relaxed text-foreground/80 md:text-lg">
             {about.story}
           </p>

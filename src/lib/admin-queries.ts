@@ -8,6 +8,7 @@ import type {
   Enquiry,
   PackageItem,
   AddOnItem,
+  HomepageSection,
 } from "./site-types";
 
 export type AdminBundle = {
@@ -20,6 +21,7 @@ export type AdminBundle = {
   enquiries: Enquiry[];
   packages: PackageItem[];
   addons: AddOnItem[];
+  layout: HomepageSection[];
 };
 
 export const adminAllQuery = queryOptions({

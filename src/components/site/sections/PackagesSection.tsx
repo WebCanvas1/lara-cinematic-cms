@@ -1,21 +1,27 @@
 import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { Reveal } from "../Reveal";
-import type { PackageItem } from "@/lib/site-types";
+import type { PackageItem, HeadingConfig } from "@/lib/site-types";
+import { mergeHeading } from "./section-heading";
 
-export function PackagesSection({ packages }: { packages: PackageItem[] }) {
+export function PackagesSection({ packages, heading }: { packages: PackageItem[]; heading?: HeadingConfig }) {
   if (!packages.length) return null;
+  const h = mergeHeading(heading, {
+    eyebrow: "Investment",
+    title: "Curated packages, crafted for every love story.",
+    subtitle: "Considered collections designed to preserve your day with intention, elegance, and cinematic craft.",
+  });
   return (
     <section id="packages" className="bg-cream py-24 md:py-32">
       <div className="container-editorial">
-        <Reveal className="mb-16 text-center">
-          <div className="eyebrow mb-4">Investment</div>
-          <h2 className="mx-auto max-w-2xl font-serif text-4xl md:text-5xl">
-            Curated packages, crafted for every love story.
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/70">
-            Considered collections designed to preserve your day with intention, elegance, and cinematic craft.
-          </p>
+        <Reveal className="mb-16">
+          <div className={`mx-auto max-w-2xl ${h.wrapperCls}`} style={h.wrapperStyle}>
+            {h.showEyebrow && <div className="eyebrow mb-4" style={h.eyebrowStyle}>{h.eyebrow}</div>}
+            {h.showTitle && <h2 className="font-serif text-4xl md:text-5xl" style={h.titleStyle}>{h.title}</h2>}
+            {h.showSubtitle && (
+              <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/70" style={h.subtitleStyle}>{h.subtitle}</p>
+            )}
+          </div>
         </Reveal>
 
         <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">

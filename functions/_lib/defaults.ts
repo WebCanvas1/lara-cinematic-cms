@@ -11,6 +11,7 @@ import type {
   PackageItem,
   AddOnItem,
 } from "../../src/lib/site-types";
+import { DEFAULT_HOMEPAGE_SECTIONS, type HomepageSection } from "../../src/lib/site-types";
 
 type ContentMap = Record<string, unknown>;
 type SettingsMap = Record<string, unknown>;
@@ -203,4 +204,5 @@ export const DEFAULTS = {
   enquiries: DEFAULT_ENQUIRIES,
   packages: DEFAULT_PACKAGES,
   addons: DEFAULT_ADDONS,
+  "homepage-layout": DEFAULT_HOMEPAGE_SECTIONS as HomepageSection[],
 } as const;

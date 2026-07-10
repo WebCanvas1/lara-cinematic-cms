@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react";
 import { Reveal } from "../Reveal";
-import type { AddOnItem } from "@/lib/site-types";
+import type { AddOnItem, HeadingConfig } from "@/lib/site-types";
+import { mergeHeading } from "./section-heading";
 
 function Icon({ name }: { name: string }) {
   const Cmp =
@@ -10,20 +11,24 @@ function Icon({ name }: { name: string }) {
   return <Cmp className="h-5 w-5 text-gold" />;
 }
 
-export function AddOnsSection({ addons }: { addons: AddOnItem[] }) {
+export function AddOnsSection({ addons, heading }: { addons: AddOnItem[]; heading?: HeadingConfig }) {
   if (!addons.length) return null;
-
+  const h = mergeHeading(heading, {
+    eyebrow: "Enhancements",
+    title: "Thoughtful add-ons, tailored to your day.",
+    subtitle: "Elevate any collection with these refined additions.",
+  });
   return (
     <section id="addons" className="bg-background py-24 md:py-32">
       <div className="container-editorial">
-        <Reveal className="mb-16 text-center">
-          <div className="eyebrow mb-4">Enhancements</div>
-          <h2 className="mx-auto max-w-2xl font-serif text-4xl md:text-5xl">
-            Thoughtful add-ons, tailored to your day.
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/70">
-            Elevate any collection with these refined additions.
-          </p>
+        <Reveal className="mb-16">
+          <div className={`mx-auto max-w-2xl ${h.wrapperCls}`} style={h.wrapperStyle}>
+            {h.showEyebrow && <div className="eyebrow mb-4" style={h.eyebrowStyle}>{h.eyebrow}</div>}
+            {h.showTitle && <h2 className="font-serif text-4xl md:text-5xl" style={h.titleStyle}>{h.title}</h2>}
+            {h.showSubtitle && (
+              <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/70" style={h.subtitleStyle}>{h.subtitle}</p>
+            )}
+          </div>
         </Reveal>
 
         <div className="flex flex-wrap justify-center gap-4">
