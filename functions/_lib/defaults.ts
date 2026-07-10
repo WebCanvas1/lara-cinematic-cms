@@ -204,4 +204,5 @@ export const DEFAULTS = {
   enquiries: DEFAULT_ENQUIRIES,
   packages: DEFAULT_PACKAGES,
   addons: DEFAULT_ADDONS,
+  "homepage-layout": DEFAULT_HOMEPAGE_SECTIONS as HomepageSection[],
 } as const;
