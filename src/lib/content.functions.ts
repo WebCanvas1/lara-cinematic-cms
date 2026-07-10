@@ -7,6 +7,7 @@ import type {
   Testimonial,
   PackageItem,
   AddOnItem,
+  HomepageSection,
 } from "./site-types";
 
 type Result = { ok: true };
@@ -64,3 +65,6 @@ export const reorderItems = ({
 
 export const deleteEnquiry = ({ data }: { data: { id: string } }) =>
   api.post<Result>("/api/enquiry", { action: "delete", id: data.id });
+
+export const saveHomepageLayout = ({ data }: { data: { items: HomepageSection[] } }) =>
+  api.post<Result>("/api/homepage-layout", { items: data.items });

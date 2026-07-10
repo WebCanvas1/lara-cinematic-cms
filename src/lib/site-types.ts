@@ -135,6 +135,7 @@ export type SiteBundle = {
   testimonials: Testimonial[];
   packages: PackageItem[];
   addons: AddOnItem[];
+  layout?: HomepageSection[];
 };
 
 export const PORTFOLIO_CATEGORIES = ["Weddings", "Engagements", "Events", "Commercial", "Reels"] as const;
