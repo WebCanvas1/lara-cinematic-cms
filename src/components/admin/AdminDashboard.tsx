@@ -15,15 +15,15 @@ import {
   upsertContent, upsertSettings, upsertService, deleteService,
   upsertPortfolio, deletePortfolio, upsertGalleryItem, deleteGalleryItem,
   upsertTestimonial, deleteTestimonial, reorderItems, deleteEnquiry,
-  upsertPackage, deletePackage, upsertAddon, deleteAddon,
+  upsertPackage, deletePackage, upsertAddon, deleteAddon, saveHomepageLayout,
 } from "@/lib/content.functions";
 import { lockAdmin } from "@/lib/admin.functions";
 import { compressToDataUrl } from "@/lib/image-upload";
 import { ImagePicker } from "./ImagePicker";
 import { PageHeader, Field, TextInput, TextArea, SelectInput, PrimaryButton, SecondaryButton, DangerButton, Card } from "./ui";
-import { PORTFOLIO_CATEGORIES, GALLERY_CATEGORIES, type Service, type PortfolioItem, type GalleryItem, type Testimonial, type PackageItem, type AddOnItem } from "@/lib/site-types";
+import { PORTFOLIO_CATEGORIES, GALLERY_CATEGORIES, DEFAULT_HOMEPAGE_SECTIONS, type Service, type PortfolioItem, type GalleryItem, type Testimonial, type PackageItem, type AddOnItem, type HomepageSection, type HeadingConfig } from "@/lib/site-types";
 
-const TABS = ["Overview", "Hero", "About", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
+const TABS = ["Overview", "Homepage Layout", "Hero", "About", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
 type Tab = typeof TABS[number];
 
 export function AdminDashboard() {
@@ -81,6 +81,7 @@ export function AdminDashboard() {
         ) : (
           <>
             {tab === "Overview" && <Overview bundle={bundle} />}
+            {tab === "Homepage Layout" && <HomepageLayoutTab items={((bundle as any).layout ?? []) as HomepageSection[]} />}
             {tab === "Hero" && <SectionEditor sectionKey="hero" initial={bySection(bundle.content, "hero")} table="site_content" fields={HERO_FIELDS} />}
             {tab === "About" && <SectionEditor sectionKey="about" initial={bySection(bundle.content, "about")} table="site_content" fields={ABOUT_FIELDS} />}
             {tab === "Services" && <ServicesTab services={bundle.services as Service[]} />}
