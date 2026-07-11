@@ -21,7 +21,7 @@ import { lockAdmin } from "@/lib/admin.functions";
 import { compressToDataUrl } from "@/lib/image-upload";
 import { ImagePicker } from "./ImagePicker";
 import { PageHeader, Field, TextInput, TextArea, SelectInput, PrimaryButton, SecondaryButton, DangerButton, Card } from "./ui";
-import { PORTFOLIO_CATEGORIES, GALLERY_CATEGORIES, DEFAULT_HOMEPAGE_SECTIONS, type Service, type PortfolioItem, type GalleryItem, type Testimonial, type PackageItem, type AddOnItem, type HomepageSection, type HeadingConfig } from "@/lib/site-types";
+import { PORTFOLIO_CATEGORIES, PACKAGE_CATEGORIES, GALLERY_CATEGORIES, DEFAULT_HOMEPAGE_SECTIONS, type Service, type PortfolioItem, type GalleryItem, type Testimonial, type PackageItem, type AddOnItem, type HomepageSection, type HeadingConfig, type PackageAddon } from "@/lib/site-types";
 
 const TABS = ["Overview", "Homepage Layout", "Hero", "About", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
 type Tab = typeof TABS[number];
@@ -646,6 +646,9 @@ function PackagesTab({ items }: { items: PackageItem[] }) {
       image: v.image || "",
       badge: v.badge || "",
       description: v.description || "",
+      long_description: v.long_description || "",
+      category: (v.category as string) || "Wedding",
+      addons: v.addons || [],
       features: v.features || [],
       buttonText: v.buttonText || "Enquire Now",
       buttonLink: v.buttonLink || "/contact",
@@ -695,14 +698,24 @@ function PackagesTab({ items }: { items: PackageItem[] }) {
 
       {editing && <Modal onClose={() => setEditing(null)} title={editing.id ? "Edit package" : "New package"}>
         <Field label="Name"><TextInput value={editing.name || ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
+        <Field label="Category">
+          <SelectInput value={editing.category || "Wedding"} onChange={(e) => setEditing({ ...editing, category: e.target.value })}>
+            {PACKAGE_CATEGORIES.map((c) => <option key={c} value={c}>{c === "Wedding" ? "Wedding Packages" : "Events"}</option>)}
+          </SelectInput>
+        </Field>
         <Field label="Subtitle"><TextInput value={editing.subtitle || ""} onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })} /></Field>
         <Field label="Price (e.g. £2,250)"><TextInput value={editing.price || ""} onChange={(e) => setEditing({ ...editing, price: e.target.value })} /></Field>
         <Field label="Badge text (e.g. Most Popular)"><TextInput value={editing.badge || ""} onChange={(e) => setEditing({ ...editing, badge: e.target.value })} /></Field>
-        <Field label="Description"><TextArea rows={3} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
+        <Field label="Short description (used on homepage & category page)"><TextArea rows={2} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
+        <Field label="Full description (detail page)"><TextArea rows={5} value={editing.long_description || ""} onChange={(e) => setEditing({ ...editing, long_description: e.target.value })} /></Field>
         <ImagePicker label="Package image" value={editing.image || ""} onChange={(v) => setEditing({ ...editing, image: v })} />
         <FeaturesEditor
           features={editing.features || []}
           onChange={(features) => setEditing({ ...editing, features })}
+        />
+        <PackageAddonsEditor
+          addons={editing.addons || []}
+          onChange={(addons) => setEditing({ ...editing, addons })}
         />
         <Field label="Button text"><TextInput value={editing.buttonText || ""} onChange={(e) => setEditing({ ...editing, buttonText: e.target.value })} /></Field>
         <Field label="Button link"><TextInput value={editing.buttonLink || ""} onChange={(e) => setEditing({ ...editing, buttonLink: e.target.value })} /></Field>
@@ -712,6 +725,24 @@ function PackagesTab({ items }: { items: PackageItem[] }) {
         </div>
         <div className="mt-4 flex justify-end gap-2"><SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton><PrimaryButton onClick={() => save(editing)}>Save</PrimaryButton></div>
       </Modal>}
+    </div>
+  );
+}
+
+function PackageAddonsEditor({ addons, onChange }: { addons: PackageAddon[]; onChange: (a: PackageAddon[]) => void }) {
+  return (
+    <div>
+      <div className="mb-1.5 text-[0.7rem] uppercase tracking-[0.22em] text-foreground/70">Package add-ons</div>
+      <div className="space-y-2">
+        {addons.map((a, i) => (
+          <div key={i} className="flex gap-2">
+            <TextInput placeholder="Title" value={a.title} onChange={(e) => onChange(addons.map((x, idx) => idx === i ? { ...x, title: e.target.value } : x))} />
+            <TextInput placeholder="Price (optional)" value={a.price || ""} onChange={(e) => onChange(addons.map((x, idx) => idx === i ? { ...x, price: e.target.value } : x))} />
+            <DangerButton onClick={() => onChange(addons.filter((_, idx) => idx !== i))}><Trash2 className="h-3.5 w-3.5" /></DangerButton>
+          </div>
+        ))}
+        <SecondaryButton onClick={() => onChange([...addons, { title: "", price: "" }])}><Plus className="h-3.5 w-3.5" /> Add add-on</SecondaryButton>
+      </div>
     </div>
   );
 }
