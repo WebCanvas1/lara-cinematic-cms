@@ -10,8 +10,9 @@ import type {
   Enquiry,
   PackageItem,
   AddOnItem,
+  TeamMember,
 } from "../../src/lib/site-types";
-import { DEFAULT_HOMEPAGE_SECTIONS, type HomepageSection } from "../../src/lib/site-types";
+import { DEFAULT_HOMEPAGE_SECTIONS, DEFAULT_NAV, type HomepageSection } from "../../src/lib/site-types";
 
 type ContentMap = Record<string, unknown>;
 type SettingsMap = Record<string, unknown>;
@@ -38,6 +39,14 @@ export const DEFAULT_CONTENT: ContentMap = {
     experience:
       "8+ years documenting weddings, elopements, and editorial commissions across the UK and Europe.",
   },
+  about_main: {
+    eyebrow: "About",
+    title: "About Lara Cinematography",
+    description:
+      "A boutique studio devoted to cinematic wedding films and editorial photography. Every frame is crafted with intention — soft, warm, and unmistakably you.",
+    image: "",
+  },
+  navigation: DEFAULT_NAV,
   why_choose: {
     items: [
       { icon: "Film", title: "Cinematic Storytelling", description: "Every film is edited as a story — not a highlight reel." },
@@ -85,6 +94,7 @@ export const DEFAULT_SERVICES: Service[] = [
 ];
 
 export const DEFAULT_PORTFOLIO: PortfolioItem[] = [];
+export const DEFAULT_TEAM: TeamMember[] = [];
 export const DEFAULT_GALLERY: GalleryItem[] = [];
 
 export const DEFAULT_TESTIMONIALS: Testimonial[] = [
@@ -204,5 +214,6 @@ export const DEFAULTS = {
   enquiries: DEFAULT_ENQUIRIES,
   packages: DEFAULT_PACKAGES,
   addons: DEFAULT_ADDONS,
+  team: DEFAULT_TEAM,
   "homepage-layout": DEFAULT_HOMEPAGE_SECTIONS as HomepageSection[],
 } as const;
