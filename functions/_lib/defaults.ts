@@ -114,6 +114,9 @@ export const DEFAULT_PACKAGES: PackageItem[] = [
     image: "",
     badge: "",
     description: "A refined photography-only package for intimate ceremonies and elopements.",
+    long_description: "A refined, photography-only collection designed for intimate ceremonies and elopements. Includes a single lead photographer, editorial coverage, and a heirloom online gallery.",
+    category: "Wedding",
+    addons: [],
     features: [
       "Up to 6 hours coverage",
       "One lead photographer",
