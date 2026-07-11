@@ -1,12 +1,12 @@
 import { json, requireAdmin, type Ctx, type Env } from "../../_lib/env";
 import { readCollection } from "../../_lib/kv";
-import type { Enquiry, HomepageSection } from "../../../src/lib/site-types";
+import type { Enquiry, HomepageSection, TeamMember } from "../../../src/lib/site-types";
 
 type Map = Record<string, unknown>;
 
 export const onRequestGet: PagesFunction<Env, string, { isAdmin?: boolean }> = async (ctx) => {
   const guard = requireAdmin(ctx as unknown as Ctx); if (guard) return guard;
-  const [content, settings, services, portfolio, gallery, testimonials, enquiries, packages, addons, layout] = await Promise.all([
+  const [content, settings, services, portfolio, gallery, testimonials, enquiries, packages, addons, layout, team] = await Promise.all([
     readCollection<Map>(ctx.env, "site-content"),
     readCollection<Map>(ctx.env, "settings"),
     readCollection<{ sort_order?: number }[]>(ctx.env, "services"),
@@ -17,6 +17,7 @@ export const onRequestGet: PagesFunction<Env, string, { isAdmin?: boolean }> = a
     readCollection<{ sort_order?: number }[]>(ctx.env, "packages"),
     readCollection<{ sort_order?: number }[]>(ctx.env, "addons"),
     readCollection<HomepageSection[]>(ctx.env, "homepage-layout"),
+    readCollection<TeamMember[]>(ctx.env, "team"),
   ]);
   const asRows = (m: Map) => Object.entries(m).map(([key, value]) => ({ key, value }));
   const bySort = <T extends { sort_order?: number }>(r: T[]) => [...r].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
@@ -31,5 +32,6 @@ export const onRequestGet: PagesFunction<Env, string, { isAdmin?: boolean }> = a
     packages: bySort(packages),
     addons: bySort(addons),
     layout: bySort(layout as HomepageSection[] as unknown as { sort_order?: number }[]) as unknown as HomepageSection[],
+    team: bySort(team as unknown as { sort_order?: number }[]) as unknown as TeamMember[],
   });
 };

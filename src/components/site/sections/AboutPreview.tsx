@@ -1,14 +1,24 @@
 import { Link } from "@tanstack/react-router";
 import { Reveal } from "../Reveal";
 import portraitDefault from "@/assets/portrait.jpg";
-import type { AboutContent, HeadingConfig } from "@/lib/site-types";
+import type { AboutContent, AboutMainContent, HeadingConfig } from "@/lib/site-types";
 import { mergeHeading } from "./section-heading";
 
-export function AboutPreview({ about, heading }: { about: AboutContent; heading?: HeadingConfig }) {
-  const portrait = about.portrait_url || portraitDefault;
+export function AboutPreview({
+  about,
+  aboutMain,
+  heading,
+}: {
+  about: AboutContent;
+  aboutMain?: AboutMainContent;
+  heading?: HeadingConfig;
+}) {
+  const portrait = aboutMain?.image || about.portrait_url || portraitDefault;
+  const title = aboutMain?.title || "About Lara Cinematography";
+  const description = aboutMain?.description || about.story;
   const h = mergeHeading(heading, {
-    eyebrow: "About",
-    title: about.tagline || "Cinematographer & Storyteller",
+    eyebrow: aboutMain?.eyebrow || "About",
+    title,
     align: "left",
   });
   return (
@@ -16,7 +26,7 @@ export function AboutPreview({ about, heading }: { about: AboutContent; heading?
       <div className="container-editorial grid gap-16 md:grid-cols-12 md:gap-20">
         <Reveal className="md:col-span-5">
           <div className="relative">
-            <img src={portrait} alt={about.name} className="w-full rounded-3xl object-cover shadow-lg shadow-ink/10" loading="lazy" />
+            <img src={portrait} alt={title} className="w-full rounded-3xl object-cover shadow-lg shadow-ink/10" loading="lazy" />
             <div className="absolute -bottom-4 -right-4 hidden h-24 w-24 rounded-3xl border border-gold md:block" />
           </div>
         </Reveal>
@@ -30,9 +40,11 @@ export function AboutPreview({ about, heading }: { about: AboutContent; heading?
               <p className="mt-4 text-base leading-relaxed text-foreground/70" style={h.subtitleStyle}>{h.subtitle}</p>
             )}
           </div>
-          <p className="mt-8 whitespace-pre-line text-base leading-relaxed text-foreground/80 md:text-lg">
-            {about.story}
-          </p>
+          {description && (
+            <p className="mt-8 whitespace-pre-line text-base leading-relaxed text-foreground/80 md:text-lg">
+              {description}
+            </p>
+          )}
           {about.mission && (
             <blockquote className="mt-8 border-l-2 border-gold pl-6 font-serif text-lg italic text-ink">
               {about.mission}
@@ -40,9 +52,9 @@ export function AboutPreview({ about, heading }: { about: AboutContent; heading?
           )}
           <Link
             to="/about"
-            className="mt-10 inline-flex border-b border-ink pb-1 text-[0.72rem] uppercase tracking-[0.28em] text-ink"
+            className="mt-10 inline-flex rounded-full border border-ink px-8 py-3 text-[0.72rem] uppercase tracking-[0.28em] text-ink transition-all hover:bg-ink hover:text-cream"
           >
-            Read the full story
+            Read Full Story
           </Link>
         </Reveal>
       </div>

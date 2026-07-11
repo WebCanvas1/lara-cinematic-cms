@@ -9,6 +9,7 @@ import type {
   PackageItem,
   AddOnItem,
   HomepageSection,
+  TeamMember,
 } from "./site-types";
 
 export type AdminBundle = {
@@ -22,6 +23,7 @@ export type AdminBundle = {
   packages: PackageItem[];
   addons: AddOnItem[];
   layout: HomepageSection[];
+  team: TeamMember[];
 };
 
 export const adminAllQuery = queryOptions({

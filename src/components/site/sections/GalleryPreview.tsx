@@ -2,11 +2,34 @@ import { Link } from "@tanstack/react-router";
 import { Reveal } from "../Reveal";
 import type { GalleryItem, HeadingConfig } from "@/lib/site-types";
 import { mergeHeading } from "./section-heading";
+import { Carousel } from "../Carousel";
 
-export function GalleryPreview({ items, heading }: { items: GalleryItem[]; heading?: HeadingConfig }) {
+export function GalleryPreview({
+  items,
+  heading,
+  showEnterLink = true,
+  eyebrowDefault = "Gallery",
+  titleDefault = "A quieter kind of storytelling.",
+}: {
+  items: GalleryItem[];
+  heading?: HeadingConfig;
+  showEnterLink?: boolean;
+  eyebrowDefault?: string;
+  titleDefault?: string;
+}) {
   if (!items.length) return null;
-  const shown = items.slice(0, 6);
-  const h = mergeHeading(heading, { eyebrow: "Gallery", title: "A quieter kind of storytelling." });
+  const shown = items.slice(0, 20);
+  const h = mergeHeading(heading, { eyebrow: eyebrowDefault, title: titleDefault });
+  const slides = shown.map((item) => (
+    <div key={item.id} className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-mist shadow-sm">
+      <img
+        src={item.image_url}
+        alt={item.alt || "Gallery image"}
+        loading="lazy"
+        className="h-full w-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-105"
+      />
+    </div>
+  ));
   return (
     <section className="bg-cream py-24 md:py-32">
       <div className="container-editorial">
@@ -20,33 +43,20 @@ export function GalleryPreview({ items, heading }: { items: GalleryItem[]; headi
           </div>
         </Reveal>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
-          {shown.map((item, i) => (
-            <Reveal
-              key={item.id}
-              delay={i * 0.05}
-              className={i % 5 === 0 ? "md:row-span-2" : ""}
-            >
-              <div className="group relative h-full overflow-hidden rounded-2xl bg-mist shadow-sm">
-                <img
-                  src={item.image_url}
-                  alt={item.alt || "Gallery image"}
-                  loading="lazy"
-                  className={`w-full ${i % 5 === 0 ? "h-full min-h-[420px]" : "aspect-[4/5]"} object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-105`}
-                />
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        <Carousel slidesDesktop={4} slidesTablet={2} slidesMobile={1} gapPx={20}>
+          {slides}
+        </Carousel>
 
-        <div className="mt-12 text-center">
-          <Link
-            to="/gallery"
-            className="inline-flex border-b border-ink pb-1 text-[0.72rem] uppercase tracking-[0.28em] text-ink"
-          >
-            Enter the gallery
-          </Link>
-        </div>
+        {showEnterLink && (
+          <div className="mt-12 text-center">
+            <Link
+              to="/portfolio/photography"
+              className="inline-flex border-b border-ink pb-1 text-[0.72rem] uppercase tracking-[0.28em] text-ink"
+            >
+              Enter the gallery
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );

@@ -51,10 +51,12 @@ export type Service = {
   active: boolean;
 };
 
+export type PortfolioCategory = "Photography" | "Videography";
+
 export type PortfolioItem = {
   id: string;
   title: string;
-  category: string;
+  category: string; // "Photography" | "Videography" (legacy strings normalised on read)
   description: string;
   youtube_url: string | null;
   vimeo_url: string | null;
@@ -95,6 +97,10 @@ export type Enquiry = {
   created_at: string;
 };
 
+export type PackageAddon = { title: string; price?: string };
+
+export type PackageCategory = "Wedding" | "Events";
+
 export type PackageItem = {
   id: string;
   name: string;
@@ -103,7 +109,10 @@ export type PackageItem = {
   image: string;
   badge?: string;
   description?: string;
+  long_description?: string;
   features: string[];
+  addons?: PackageAddon[];
+  category?: string; // "Wedding" | "Events"
   buttonText: string;
   buttonLink?: string;
   active: boolean;
@@ -121,9 +130,65 @@ export type AddOnItem = {
   sort_order: number;
 };
 
+export type TeamMember = {
+  id: string;
+  image: string;
+  name: string;
+  role: string;
+  description: string;
+  active: boolean;
+  sort_order: number;
+};
+
+export type AboutMainContent = {
+  eyebrow?: string;
+  title: string;
+  description: string;
+  image: string;
+};
+
+export type NavChild = { label: string; href: string; enabled?: boolean };
+export type NavItem = {
+  id: string;
+  label: string;
+  href?: string;
+  enabled?: boolean;
+  children?: NavChild[];
+};
+export type NavConfig = { items: NavItem[] };
+
+export const DEFAULT_NAV: NavConfig = {
+  items: [
+    { id: "home", label: "Home", href: "/", enabled: true },
+    {
+      id: "portfolio",
+      label: "Portfolio",
+      enabled: true,
+      children: [
+        { label: "Photography", href: "/portfolio/photography", enabled: true },
+        { label: "Videography", href: "/portfolio/videography", enabled: true },
+      ],
+    },
+    {
+      id: "packages",
+      label: "Packages",
+      enabled: true,
+      children: [
+        { label: "Wedding Packages", href: "/packages/weddings", enabled: true },
+        { label: "Events", href: "/packages/events", enabled: true },
+      ],
+    },
+    { id: "about", label: "About", href: "/about", enabled: true },
+    { id: "contact", label: "Contact", href: "/contact", enabled: true },
+  ],
+};
+
 export type SiteBundle = {
   hero: HeroContent;
   about: AboutContent;
+  about_main?: AboutMainContent;
+  team: TeamMember[];
+  nav?: NavConfig;
   why_choose: WhyChooseContent;
   footer: FooterContent;
   contact: ContactSettings;
@@ -138,7 +203,8 @@ export type SiteBundle = {
   layout?: HomepageSection[];
 };
 
-export const PORTFOLIO_CATEGORIES = ["Weddings", "Engagements", "Events", "Commercial", "Reels"] as const;
+export const PORTFOLIO_CATEGORIES = ["Photography", "Videography"] as const;
+export const PACKAGE_CATEGORIES = ["Wedding", "Events"] as const;
 export const GALLERY_CATEGORIES = ["Weddings", "Engagements", "Portraits", "Behind the Scenes"] as const;
 
 export type HeadingConfig = {
