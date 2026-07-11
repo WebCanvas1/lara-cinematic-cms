@@ -21,7 +21,7 @@ const RENDERERS: Record<HomepageSectionId, SectionRenderer> = {
   hero: (d) => <HeroSection hero={d.hero} />,
   about: (d, h) => <AboutPreview about={d.about} heading={h} />,
   services: (d, h) => <ServicesSection services={d.services} heading={h} />,
-  packages: (d, h) => <PackagesSection packages={d.packages} heading={h} />,
+  packages: (d, h) => <PackagesSection packages={d.packages} heading={h} variant="preview" />,
   addons: (d, h) => <AddOnsSection addons={d.addons} heading={h} />,
   portfolio: (d, h) => <FeaturedFilms films={d.featured_portfolio} heading={h} />,
   gallery: (d, h) => <GalleryPreview items={d.featured_gallery} heading={h} />,
