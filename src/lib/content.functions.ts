@@ -8,6 +8,9 @@ import type {
   PackageItem,
   AddOnItem,
   HomepageSection,
+  TeamMember,
+  NavConfig,
+  AboutMainContent,
 } from "./site-types";
 
 type Result = { ok: true };
@@ -68,3 +71,18 @@ export const deleteEnquiry = ({ data }: { data: { id: string } }) =>
 
 export const saveHomepageLayout = ({ data }: { data: { items: HomepageSection[] } }) =>
   api.post<Result>("/api/homepage-layout", { items: data.items });
+
+export const upsertTeamMember = ({ data }: { data: Partial<TeamMember> }) =>
+  api.post<Result>("/api/team", { action: "upsert", item: data });
+
+export const deleteTeamMember = ({ data }: { data: { id: string } }) =>
+  api.post<Result>("/api/team", { action: "delete", id: data.id });
+
+export const reorderTeam = ({ data }: { data: { ids: string[] } }) =>
+  api.post<Result>("/api/team", { action: "reorder", ids: data.ids });
+
+export const saveNav = ({ data }: { data: NavConfig }) =>
+  api.post<Result>("/api/content", { key: "navigation", value: data });
+
+export const saveAboutMain = ({ data }: { data: AboutMainContent }) =>
+  api.post<Result>("/api/content", { key: "about_main", value: data });
