@@ -47,31 +47,14 @@ export function SiteFooter({
 
         <div>
           <div className="eyebrow mb-4">Explore</div>
-
           <ul className="space-y-2 text-sm text-foreground/80">
-            <li>
-              <Link to="/portfolio" className="hover:text-gold">
-                Portfolio
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/gallery" className="hover:text-gold">
-                Gallery
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/about" className="hover:text-gold">
-                About
-              </Link>
-            </li>
-
-            <li>
-              <Link to="/contact" className="hover:text-gold">
-                Contact
-              </Link>
-            </li>
+            <li><Link to="/" className="hover:text-gold">Home</Link></li>
+            <li><Link to="/portfolio/photography" className="hover:text-gold">Photography</Link></li>
+            <li><Link to="/portfolio/videography" className="hover:text-gold">Videography</Link></li>
+            <li><Link to="/packages/weddings" className="hover:text-gold">Wedding Packages</Link></li>
+            <li><Link to="/packages/events" className="hover:text-gold">Events</Link></li>
+            <li><Link to="/about" className="hover:text-gold">About</Link></li>
+            <li><Link to="/contact" className="hover:text-gold">Contact</Link></li>
           </ul>
         </div>
 
