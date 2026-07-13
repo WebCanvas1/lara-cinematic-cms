@@ -16,7 +16,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="container-editorial flex items-center justify-between py-4">
+      <div className="container-editorial flex items-center justify-between py-2.5 md:py-3">
         <Link
           to="/"
           className="group flex items-center"
@@ -26,7 +26,7 @@ export function SiteHeader() {
           <img
   src={laraLogo}
   alt="Lara Cinematography"
-  className="h-auto w-[170px] object-contain transition-transform duration-300 group-hover:scale-105 md:w-[240px]"
+  className="h-auto w-[120px] object-contain transition-transform duration-300 group-hover:scale-105 md:w-[170px]"
 />
         </Link>
 
