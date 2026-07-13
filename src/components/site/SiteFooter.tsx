@@ -36,7 +36,7 @@ export function SiteFooter({
             <img
               src={laraLogo}
               alt="Lara Cinematography"
-              className="h-24 w-auto object-contain transition-transform duration-300 hover:scale-105"
+              className="h-auto w-[220px] object-contain transition-transform duration-300 hover:scale-105 md:w-[280px]"
             />
           </Link>
 
@@ -47,14 +47,61 @@ export function SiteFooter({
 
         <div>
           <div className="eyebrow mb-4">Explore</div>
+
           <ul className="space-y-2 text-sm text-foreground/80">
-            <li><Link to="/" className="hover:text-gold">Home</Link></li>
-            <li><Link to="/portfolio/photography" className="hover:text-gold">Photography</Link></li>
-            <li><Link to="/portfolio/videography" className="hover:text-gold">Videography</Link></li>
-            <li><Link to="/packages/weddings" className="hover:text-gold">Wedding Packages</Link></li>
-            <li><Link to="/packages/events" className="hover:text-gold">Events</Link></li>
-            <li><Link to="/about" className="hover:text-gold">About</Link></li>
-            <li><Link to="/contact" className="hover:text-gold">Contact</Link></li>
+            <li>
+              <Link to="/" className="hover:text-gold">
+                Home
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                to="/portfolio/photography"
+                className="hover:text-gold"
+              >
+                Photography
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                to="/portfolio/videography"
+                className="hover:text-gold"
+              >
+                Videography
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                to="/packages/weddings"
+                className="hover:text-gold"
+              >
+                Wedding Packages
+              </Link>
+            </li>
+
+            <li>
+              <Link
+                to="/packages/events"
+                className="hover:text-gold"
+              >
+                Events
+              </Link>
+            </li>
+
+            <li>
+              <Link to="/about" className="hover:text-gold">
+                About
+              </Link>
+            </li>
+
+            <li>
+              <Link to="/contact" className="hover:text-gold">
+                Contact
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -87,7 +134,9 @@ export function SiteFooter({
             {contact.address && <li>{contact.address}</li>}
 
             {contact.hours && (
-              <li className="text-muted-foreground">{contact.hours}</li>
+              <li className="text-muted-foreground">
+                {contact.hours}
+              </li>
             )}
           </ul>
 
