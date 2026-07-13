@@ -23,11 +23,13 @@ export function SiteHeader() {
           onClick={() => setOpen(false)}
           aria-label="Lara Cinematography — Home"
         >
-          <img
-  src={laraLogo}
-  alt="Lara Cinematography"
-  className="h-auto w-[120px] object-contain transition-transform duration-300 group-hover:scale-105 md:w-[170px]"
-/>
+          <div className="h-[68px] w-[135px] overflow-hidden md:h-[88px] md:w-[180px]">
+  <img
+    src={laraLogo}
+    alt="Lara Cinematography"
+    className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+  />
+</div>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
