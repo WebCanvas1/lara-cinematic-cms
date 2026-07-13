@@ -55,11 +55,28 @@ export function AdminDashboard() {
   const { data, isLoading } = useQuery(adminAllQuery);
 
   async function handleLogout() {
+  try {
     await lock();
+  } catch (err) {
+    console.error("Logout failed:", err);
+  } finally {
+    // Clear React Query cache
     qc.clear();
+
+    // Clear any admin/session data stored in the browser
+    sessionStorage.clear();
+
+    localStorage.removeItem("admin");
+    localStorage.removeItem("adminSession");
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("auth");
+
     toast.success("Signed out");
-    navigate({ to: "/admin/unlock" });
+
+    // Force a full reload to the website homepage
+    window.location.replace("/");
   }
+}
 
   const bundle = data;
   const bySection = (rows: { key: string; value: unknown }[] | undefined, key: string) =>
