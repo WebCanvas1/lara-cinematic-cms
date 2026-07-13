@@ -5,6 +5,15 @@ export interface Env {
 
 export type Ctx = EventContext<Env, string, { isAdmin?: boolean }>;
 
+export type Env = {
+  LARA_CINEMATOGRAPHY_KV: KVNamespace;
+  ADMIN_PASSWORD: string;
+
+  GA4_PROPERTY_ID?: string;
+  GA4_CLIENT_EMAIL?: string;
+  GA4_PRIVATE_KEY?: string;
+};
+
 export function json(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
     ...init,
