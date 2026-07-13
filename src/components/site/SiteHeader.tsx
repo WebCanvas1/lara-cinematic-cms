@@ -24,10 +24,10 @@ export function SiteHeader() {
           aria-label="Lara Cinematography — Home"
         >
           <img
-            src={laraLogo}
-            alt="Lara Cinematography"
-            className="h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105 md:h-20"
-          />
+  src={laraLogo}
+  alt="Lara Cinematography"
+  className="h-auto w-[170px] object-contain transition-transform duration-300 group-hover:scale-105 md:w-[240px]"
+/>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
