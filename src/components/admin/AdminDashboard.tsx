@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
@@ -16,14 +16,34 @@ import {
   upsertPortfolio, deletePortfolio, upsertGalleryItem, deleteGalleryItem,
   upsertTestimonial, deleteTestimonial, reorderItems, deleteEnquiry,
   upsertPackage, deletePackage, upsertAddon, deleteAddon, saveHomepageLayout,
+  upsertTeamMember, deleteTeamMember, reorderTeam, saveNav, saveAboutMain,
 } from "@/lib/content.functions";
 import { lockAdmin } from "@/lib/admin.functions";
 import { compressToDataUrl } from "@/lib/image-upload";
 import { ImagePicker } from "./ImagePicker";
 import { PageHeader, Field, TextInput, TextArea, SelectInput, PrimaryButton, SecondaryButton, DangerButton, Card } from "./ui";
-import { PORTFOLIO_CATEGORIES, PACKAGE_CATEGORIES, GALLERY_CATEGORIES, DEFAULT_HOMEPAGE_SECTIONS, type Service, type PortfolioItem, type GalleryItem, type Testimonial, type PackageItem, type AddOnItem, type HomepageSection, type HeadingConfig, type PackageAddon } from "@/lib/site-types";
+import {
+  PORTFOLIO_CATEGORIES,
+  PACKAGE_CATEGORIES,
+  GALLERY_CATEGORIES,
+  DEFAULT_HOMEPAGE_SECTIONS,
+  DEFAULT_NAV,
+  type Service,
+  type PortfolioItem,
+  type GalleryItem,
+  type Testimonial,
+  type PackageItem,
+  type AddOnItem,
+  type HomepageSection,
+  type HeadingConfig,
+  type PackageAddon,
+  type TeamMember,
+  type AboutMainContent,
+  type NavConfig,
+  type NavItem,
+} from "@/lib/site-types";
 
-const TABS = ["Overview", "Homepage Layout", "Hero", "About", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
+const TABS = ["Overview", "Homepage Layout", "Hero", "About", "Team", "Navigation", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
 type Tab = typeof TABS[number];
 
 export function AdminDashboard() {
@@ -83,7 +103,20 @@ export function AdminDashboard() {
             {tab === "Overview" && <Overview bundle={bundle} />}
             {tab === "Homepage Layout" && <HomepageLayoutTab items={((bundle as any).layout ?? []) as HomepageSection[]} />}
             {tab === "Hero" && <SectionEditor sectionKey="hero" initial={bySection(bundle.content, "hero")} table="site_content" fields={HERO_FIELDS} />}
-            {tab === "About" && <SectionEditor sectionKey="about" initial={bySection(bundle.content, "about")} table="site_content" fields={ABOUT_FIELDS} />}
+            {tab === "About" && (
+              <AboutTab
+                aboutMain={bySection(bundle.content, "about_main") as AboutMainContent}
+                about={bySection(bundle.content, "about")}
+              />
+            )}
+            {tab === "Team" && <TeamTab members={(bundle.team ?? []) as TeamMember[]} />}
+            {tab === "Navigation" && (
+              <NavigationTab
+                navigation={(bySection(bundle.content, "navigation") as NavConfig)?.items?.length
+                  ? (bySection(bundle.content, "navigation") as NavConfig)
+                  : DEFAULT_NAV}
+              />
+            )}
             {tab === "Services" && <ServicesTab services={bundle.services as Service[]} />}
             {tab === "Packages" && <PackagesTab items={(bundle.packages ?? []) as PackageItem[]} />}
             {tab === "Add-ons" && <AddOnsTab items={(bundle.addons ?? []) as AddOnItem[]} />}
@@ -162,7 +195,6 @@ const ABOUT_FIELDS: FieldDef[] = [
   { key: "story", label: "Story", type: "textarea" },
   { key: "mission", label: "Mission", type: "textarea" },
   { key: "approach", label: "Approach", type: "textarea" },
-  { key: "experience", label: "Experience", type: "textarea" },
 ];
 const FOOTER_FIELDS: FieldDef[] = [
   { key: "tagline", label: "Footer tagline", type: "text" },
@@ -206,6 +238,429 @@ function SectionEditor({ sectionKey, initial, table, fields }: {
                   <TextInput value={state[f.key] || ""} onChange={(e) => setState({ ...state, [f.key]: e.target.value })} />
                 )}
               </Field>
+            )}
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+// -------------- About --------------
+function AboutTab({
+  aboutMain,
+  about,
+}: {
+  aboutMain: AboutMainContent;
+  about: Record<string, any>;
+}) {
+  return (
+    <div className="space-y-10">
+      <AboutMainEditor initial={aboutMain} />
+      <SectionEditor
+        sectionKey="about"
+        initial={about}
+        table="site_content"
+        fields={ABOUT_FIELDS}
+      />
+    </div>
+  );
+}
+
+function AboutMainEditor({ initial }: { initial: AboutMainContent }) {
+  const qc = useQueryClient();
+  const save = useServerFn(saveAboutMain);
+  const [state, setState] = useState<AboutMainContent>(() => ({
+    eyebrow: initial?.eyebrow ?? "About",
+    title: initial?.title ?? "About Lara Cinematography",
+    description: initial?.description ?? "",
+    image: initial?.image ?? "",
+  }));
+
+  useEffect(() => {
+    setState({
+      eyebrow: initial?.eyebrow ?? "About",
+      title: initial?.title ?? "About Lara Cinematography",
+      description: initial?.description ?? "",
+      image: initial?.image ?? "",
+    });
+  }, [initial]);
+
+  const mut = useMutation({
+    mutationFn: () => save({ data: state }),
+    onSuccess: () => {
+      toast.success("Main About section saved");
+      qc.invalidateQueries();
+    },
+    onError: () => toast.error("Could not save Main About section"),
+  });
+
+  return (
+    <div>
+      <PageHeader
+        title="About Lara Cinematography"
+        subtitle="Edit the main About section shown on the homepage and About page."
+        actions={
+          <PrimaryButton onClick={() => mut.mutate()} disabled={mut.isPending}>
+            <Save className="h-3.5 w-3.5" />
+            {mut.isPending ? "Saving…" : "Save main About"}
+          </PrimaryButton>
+        }
+      />
+      <Card>
+        <div className="space-y-5">
+          <Field label="Eyebrow">
+            <TextInput
+              value={state.eyebrow || ""}
+              onChange={(e) => setState({ ...state, eyebrow: e.target.value })}
+            />
+          </Field>
+          <Field label="Title">
+            <TextInput
+              value={state.title || ""}
+              onChange={(e) => setState({ ...state, title: e.target.value })}
+            />
+          </Field>
+          <Field label="Description">
+            <TextArea
+              rows={6}
+              value={state.description || ""}
+              onChange={(e) => setState({ ...state, description: e.target.value })}
+            />
+          </Field>
+          <ImagePicker
+            label="Main About image"
+            value={state.image || ""}
+            onChange={(image) => setState({ ...state, image })}
+          />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// -------------- Team --------------
+function TeamTab({ members }: { members: TeamMember[] }) {
+  const qc = useQueryClient();
+  const up = useServerFn(upsertTeamMember);
+  const del = useServerFn(deleteTeamMember);
+  const reorder = useServerFn(reorderTeam);
+  const [editing, setEditing] = useState<Partial<TeamMember> | null>(null);
+  const [order, setOrder] = useState<string[]>(members.map((member) => member.id));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  useEffect(() => {
+    setOrder(members.map((member) => member.id));
+  }, [members]);
+
+  const sortedMembers = order
+    .map((id) => members.find((member) => member.id === id))
+    .filter(Boolean) as TeamMember[];
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const next = arrayMove(
+      order,
+      order.indexOf(String(active.id)),
+      order.indexOf(String(over.id)),
+    );
+    setOrder(next);
+
+    try {
+      await reorder({ data: { ids: next } });
+      toast.success("Team order saved");
+      qc.invalidateQueries();
+    } catch {
+      toast.error("Could not reorder team");
+    }
+  }
+
+  async function save(member: Partial<TeamMember>) {
+    try {
+      await up({
+        data: {
+          id: member.id,
+          image: member.image || "",
+          name: member.name || "",
+          role: member.role || "",
+          description: member.description || "",
+          active: member.active ?? true,
+          sort_order: member.sort_order ?? members.length,
+        },
+      });
+      setEditing(null);
+      toast.success("Team member saved");
+      qc.invalidateQueries();
+    } catch {
+      toast.error("Could not save team member");
+    }
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Team"
+        subtitle="Add and manage the people displayed on the About page."
+        actions={
+          <PrimaryButton
+            onClick={() =>
+              setEditing({
+                image: "",
+                name: "",
+                role: "",
+                description: "",
+                active: true,
+                sort_order: members.length,
+              })
+            }
+          >
+            <Plus className="h-3.5 w-3.5" /> New team member
+          </PrimaryButton>
+        }
+      />
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={order} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {sortedMembers.map((member) => (
+              <SortableItem key={member.id} id={member.id}>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex min-w-0 flex-1 gap-4">
+                    {member.image ? (
+                      <img
+                        src={member.image}
+                        alt={member.name}
+                        className="h-20 w-20 shrink-0 rounded-2xl object-cover"
+                      />
+                    ) : (
+                      <div className="h-20 w-20 shrink-0 rounded-2xl border border-border bg-cream" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-serif text-lg text-ink">{member.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {member.role || "No role"} · {member.active ? "Active" : "Hidden"}
+                      </div>
+                      <p className="mt-2 line-clamp-3 text-sm text-foreground/70">
+                        {member.description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <SecondaryButton onClick={() => setEditing(member)}>Edit</SecondaryButton>
+                    <DangerButton
+                      onClick={async () => {
+                        if (!confirm(`Delete ${member.name || "this team member"}?`)) return;
+                        try {
+                          await del({ data: { id: member.id } });
+                          toast.success("Team member deleted");
+                          qc.invalidateQueries();
+                        } catch {
+                          toast.error("Could not delete team member");
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </DangerButton>
+                  </div>
+                </div>
+              </SortableItem>
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {members.length === 0 && (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          No team members yet.
+        </p>
+      )}
+
+      {editing && (
+        <Modal
+          title={editing.id ? "Edit team member" : "New team member"}
+          onClose={() => setEditing(null)}
+        >
+          <ImagePicker
+            label="Photo"
+            value={editing.image || ""}
+            onChange={(image) => setEditing({ ...editing, image })}
+          />
+          <Field label="Name">
+            <TextInput
+              value={editing.name || ""}
+              onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+            />
+          </Field>
+          <Field label="Role">
+            <TextInput
+              value={editing.role || ""}
+              onChange={(e) => setEditing({ ...editing, role: e.target.value })}
+            />
+          </Field>
+          <Field label="Description">
+            <TextArea
+              rows={6}
+              value={editing.description || ""}
+              onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+            />
+          </Field>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={editing.active ?? true}
+              onChange={(e) => setEditing({ ...editing, active: e.target.checked })}
+            />
+            Active
+          </label>
+          <div className="mt-4 flex justify-end gap-2">
+            <SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton>
+            <PrimaryButton onClick={() => save(editing)}>Save</PrimaryButton>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// -------------- Navigation --------------
+function NavigationTab({ navigation }: { navigation: NavConfig }) {
+  const qc = useQueryClient();
+  const save = useServerFn(saveNav);
+  const [state, setState] = useState<NavConfig>(() => ({
+    items: (navigation?.items?.length ? navigation.items : DEFAULT_NAV.items).map((item) => ({
+      ...item,
+      children: item.children?.map((child) => ({ ...child })),
+    })),
+  }));
+
+  useEffect(() => {
+    const source = navigation?.items?.length ? navigation : DEFAULT_NAV;
+    setState({
+      items: source.items.map((item) => ({
+        ...item,
+        children: item.children?.map((child) => ({ ...child })),
+      })),
+    });
+  }, [navigation]);
+
+  const mut = useMutation({
+    mutationFn: () => save({ data: state }),
+    onSuccess: () => {
+      toast.success("Navigation saved");
+      qc.invalidateQueries();
+    },
+    onError: () => toast.error("Could not save navigation"),
+  });
+
+  function updateItem(index: number, patch: Partial<NavItem>) {
+    setState((current) => ({
+      items: current.items.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, ...patch } : item,
+      ),
+    }));
+  }
+
+  function updateChild(
+    itemIndex: number,
+    childIndex: number,
+    patch: Partial<NonNullable<NavItem["children"]>[number]>,
+  ) {
+    setState((current) => ({
+      items: current.items.map((item, index) => {
+        if (index !== itemIndex) return item;
+        return {
+          ...item,
+          children: (item.children || []).map((child, index2) =>
+            index2 === childIndex ? { ...child, ...patch } : child,
+          ),
+        };
+      }),
+    }));
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Navigation"
+        subtitle="Edit menu labels and choose which items appear in the header and footer."
+        actions={
+          <PrimaryButton onClick={() => mut.mutate()} disabled={mut.isPending}>
+            <Save className="h-3.5 w-3.5" />
+            {mut.isPending ? "Saving…" : "Save navigation"}
+          </PrimaryButton>
+        }
+      />
+
+      <div className="space-y-4">
+        {state.items.map((item, itemIndex) => (
+          <Card key={item.id}>
+            <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+              <Field label="Menu label">
+                <TextInput
+                  value={item.label}
+                  onChange={(e) => updateItem(itemIndex, { label: e.target.value })}
+                />
+              </Field>
+              <Field label="Link">
+                <TextInput
+                  value={item.href || ""}
+                  onChange={(e) => updateItem(itemIndex, { href: e.target.value || undefined })}
+                  disabled={Boolean(item.children?.length)}
+                  placeholder={item.children?.length ? "Dropdown menu" : "/"}
+                />
+              </Field>
+              <label className="flex items-center gap-2 pb-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={item.enabled !== false}
+                  onChange={(e) => updateItem(itemIndex, { enabled: e.target.checked })}
+                />
+                Visible
+              </label>
+            </div>
+
+            {item.children && item.children.length > 0 && (
+              <div className="mt-5 space-y-3 border-t border-border pt-5">
+                <div className="text-[0.65rem] uppercase tracking-[0.24em] text-gold">
+                  Dropdown items
+                </div>
+                {item.children.map((child, childIndex) => (
+                  <div
+                    key={`${item.id}-${childIndex}`}
+                    className="grid gap-3 rounded-2xl border border-border bg-cream/50 p-4 md:grid-cols-[1fr_1fr_auto] md:items-end"
+                  >
+                    <Field label="Label">
+                      <TextInput
+                        value={child.label}
+                        onChange={(e) =>
+                          updateChild(itemIndex, childIndex, { label: e.target.value })
+                        }
+                      />
+                    </Field>
+                    <Field label="Link">
+                      <TextInput
+                        value={child.href}
+                        onChange={(e) =>
+                          updateChild(itemIndex, childIndex, { href: e.target.value })
+                        }
+                      />
+                    </Field>
+                    <label className="flex items-center gap-2 pb-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={child.enabled !== false}
+                        onChange={(e) =>
+                          updateChild(itemIndex, childIndex, { enabled: e.target.checked })
+                        }
+                      />
+                      Visible
+                    </label>
+                  </div>
+                ))}
+              </div>
             )}
           </Card>
         ))}
