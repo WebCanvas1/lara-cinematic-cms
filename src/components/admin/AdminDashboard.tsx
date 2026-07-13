@@ -3,7 +3,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { LogOut, ExternalLink, Plus, Trash2, GripVertical, Save } from "lucide-react";
+import { LogOut, ExternalLink, Plus, Trash2, GripVertical, Save, BarChart3, Users, Eye, MousePointerClick, Clock3, Radio } from "lucide-react";
 import {
   DndContext, PointerSensor, useSensor, useSensors, closestCenter, type DragEndEvent,
 } from "@dnd-kit/core";
@@ -19,6 +19,7 @@ import {
   upsertTeamMember, deleteTeamMember, reorderTeam, saveNav, saveAboutMain,
 } from "@/lib/content.functions";
 import { lockAdmin } from "@/lib/admin.functions";
+import { fetchAnalytics, type AnalyticsData, type AnalyticsRange } from "@/lib/analytics";
 import { compressToDataUrl } from "@/lib/image-upload";
 import { ImagePicker } from "./ImagePicker";
 import { PageHeader, Field, TextInput, TextArea, SelectInput, PrimaryButton, SecondaryButton, DangerButton, Card } from "./ui";
@@ -43,7 +44,7 @@ import {
   type NavItem,
 } from "@/lib/site-types";
 
-const TABS = ["Overview", "Homepage Layout", "Hero", "About", "Team", "Navigation", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
+const TABS = ["Overview", "Analytics", "Homepage Layout", "Hero", "About", "Team", "Navigation", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
 type Tab = typeof TABS[number];
 
 export function AdminDashboard() {
@@ -101,6 +102,7 @@ export function AdminDashboard() {
         ) : (
           <>
             {tab === "Overview" && <Overview bundle={bundle} />}
+            {tab === "Analytics" && <AnalyticsTab />}
             {tab === "Homepage Layout" && <HomepageLayoutTab items={((bundle as any).layout ?? []) as HomepageSection[]} />}
             {tab === "Hero" && <SectionEditor sectionKey="hero" initial={bySection(bundle.content, "hero")} table="site_content" fields={HERO_FIELDS} />}
             {tab === "About" && (
@@ -1069,6 +1071,199 @@ function EnquiriesTab({ enquiries }: { enquiries: any[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+
+// -------------- Analytics --------------
+function AnalyticsTab() {
+  const [range, setRange] = useState<AnalyticsRange>("28d");
+
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useQuery<AnalyticsData>({
+    queryKey: ["analytics", range],
+    queryFn: () => fetchAnalytics(range),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  function formatDuration(seconds: number): string {
+    const rounded = Math.round(seconds);
+    if (rounded < 60) return `${rounded}s`;
+    const minutes = Math.floor(rounded / 60);
+    const remainingSeconds = rounded % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  }
+
+  const summaryCards = data
+    ? [
+        { label: "Users", value: data.summary.users.toLocaleString(), Icon: Users },
+        { label: "New users", value: data.summary.newUsers.toLocaleString(), Icon: MousePointerClick },
+        { label: "Sessions", value: data.summary.sessions.toLocaleString(), Icon: BarChart3 },
+        { label: "Page views", value: data.summary.pageViews.toLocaleString(), Icon: Eye },
+        { label: "Avg. session", value: formatDuration(data.summary.averageEngagementSeconds), Icon: Clock3 },
+        { label: "Active now", value: data.summary.activeUsers.toLocaleString(), Icon: Radio },
+      ]
+    : [];
+
+  return (
+    <div>
+      <PageHeader
+        title="Analytics"
+        subtitle="Website performance from Google Analytics."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <SelectInput
+              value={range}
+              onChange={(event) => setRange(event.target.value as AnalyticsRange)}
+            >
+              <option value="7d">Last 7 days</option>
+              <option value="28d">Last 28 days</option>
+              <option value="90d">Last 90 days</option>
+            </SelectInput>
+            <SecondaryButton onClick={() => refetch()} disabled={isFetching}>
+              {isFetching ? "Refreshing…" : "Refresh"}
+            </SecondaryButton>
+          </div>
+        }
+      />
+
+      {isLoading && (
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index}>
+              <div className="h-4 animate-pulse rounded bg-border" />
+              <div className="mt-4 h-9 animate-pulse rounded bg-border" />
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {error && (
+        <Card>
+          <h3 className="font-serif text-xl text-ink">Analytics unavailable</h3>
+          <p className="mt-2 text-sm text-foreground/70">
+            {error instanceof Error ? error.message : "Unable to load analytics data."}
+          </p>
+          <div className="mt-5">
+            <PrimaryButton onClick={() => refetch()}>Try again</PrimaryButton>
+          </div>
+        </Card>
+      )}
+
+      {data && (
+        <>
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            {summaryCards.map(({ label, value, Icon }) => (
+              <Card key={label}>
+                <div className="flex items-center justify-between">
+                  <div className="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
+                    {label}
+                  </div>
+                  <Icon className="h-4 w-4 text-gold" />
+                </div>
+                <div className="mt-3 font-serif text-3xl text-ink">{value}</div>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-8 grid gap-8 lg:grid-cols-2">
+            <AnalyticsTable
+              title="Top pages"
+              headers={["Page", "Views", "Users"]}
+              rows={data.topPages.map((page) => [
+                <div key={page.path}>
+                  <div className="font-medium text-ink">{page.title}</div>
+                  <div className="text-xs text-muted-foreground">{page.path}</div>
+                </div>,
+                page.pageViews.toLocaleString(),
+                page.users.toLocaleString(),
+              ])}
+            />
+
+            <AnalyticsTable
+              title="Traffic sources"
+              headers={["Channel", "Sessions", "Users"]}
+              rows={data.sources.map((source) => [
+                source.channel,
+                source.sessions.toLocaleString(),
+                source.users.toLocaleString(),
+              ])}
+            />
+
+            <AnalyticsTable
+              title="Devices"
+              headers={["Device", "Users"]}
+              rows={data.devices.map((device) => [
+                device.device,
+                device.users.toLocaleString(),
+              ])}
+            />
+
+            <AnalyticsTable
+              title="Top countries"
+              headers={["Country", "Users"]}
+              rows={data.countries.map((country) => [
+                country.country,
+                country.users.toLocaleString(),
+              ])}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AnalyticsTable({
+  title,
+  headers,
+  rows,
+}: {
+  title: string;
+  headers: string[];
+  rows: React.ReactNode[][];
+}) {
+  return (
+    <Card>
+      <h3 className="mb-5 font-serif text-xl text-ink">{title}</h3>
+      {rows.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No data available for this period.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                {headers.map((header) => (
+                  <th
+                    key={header}
+                    className="pb-3 text-[0.65rem] font-normal uppercase tracking-[0.18em] text-muted-foreground"
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex} className="border-b border-border last:border-b-0">
+                  {row.map((cell, cellIndex) => (
+                    <td key={cellIndex} className="py-3 pr-4 text-foreground/80">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
   );
 }
 
