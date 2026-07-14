@@ -3,6 +3,7 @@ import { api } from "./api";
 import type {
   Service,
   PortfolioItem,
+  PortfolioSubcategory,
   GalleryItem,
   Testimonial,
   Enquiry,
@@ -17,6 +18,7 @@ export type AdminBundle = {
   settings: { key: string; value: unknown }[];
   services: Service[];
   portfolio: PortfolioItem[];
+  portfolio_categories: PortfolioSubcategory[];
   gallery: GalleryItem[];
   testimonials: Testimonial[];
   enquiries: Enquiry[];
