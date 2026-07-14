@@ -3,8 +3,15 @@ import { Suspense, lazy } from "react";
 
 const Home = lazy(() => import("./pages/Home"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
-const PortfolioCategory = lazy(() => import("./pages/PortfolioCategory"));
-const PackagesCategory = lazy(() => import("./pages/PackagesCategory"));
+const PortfolioCategories = lazy(
+  () => import("./pages/PortfolioCategories"),
+);
+const PortfolioCategory = lazy(
+  () => import("./pages/PortfolioCategory"),
+);
+const PackagesCategory = lazy(
+  () => import("./pages/PackagesCategory"),
+);
 const Gallery = lazy(() => import("./pages/Gallery"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -27,16 +34,43 @@ export function App() {
     <Suspense fallback={<LoadingSplash />}>
       <Routes>
         <Route path="/" element={<Home />} />
+
         <Route path="/portfolio" element={<Portfolio />} />
-        <Route path="/portfolio/photography" element={<PortfolioCategory kind="Photography" />} />
-        <Route path="/portfolio/videography" element={<PortfolioCategory kind="Videography" />} />
-        <Route path="/packages/weddings" element={<PackagesCategory kind="Wedding" />} />
-        <Route path="/packages/events" element={<PackagesCategory kind="Events" />} />
+
+        <Route
+          path="/portfolio/photography"
+          element={<PortfolioCategories kind="Photography" />}
+        />
+        <Route
+          path="/portfolio/videography"
+          element={<PortfolioCategories kind="Videography" />}
+        />
+
+        <Route
+          path="/portfolio/photography/:categorySlug"
+          element={<PortfolioCategory kind="Photography" />}
+        />
+        <Route
+          path="/portfolio/videography/:categorySlug"
+          element={<PortfolioCategory kind="Videography" />}
+        />
+
+        <Route
+          path="/packages/weddings"
+          element={<PackagesCategory kind="Wedding" />}
+        />
+        <Route
+          path="/packages/events"
+          element={<PackagesCategory kind="Events" />}
+        />
+
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/unlock" element={<AdminUnlock />} />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
