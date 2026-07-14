@@ -16,13 +16,23 @@ export type AboutContent = {
   story: string;
   mission: string;
   approach: string;
-  experience: string;
+  experience?: string;
 };
 
-export type WhyChooseItem = { icon: string; title: string; description: string };
-export type WhyChooseContent = { items: WhyChooseItem[] };
+export type WhyChooseItem = {
+  icon: string;
+  title: string;
+  description: string;
+};
 
-export type FooterContent = { tagline: string; copyright: string };
+export type WhyChooseContent = {
+  items: WhyChooseItem[];
+};
+
+export type FooterContent = {
+  tagline: string;
+  copyright: string;
+};
 
 export type ContactSettings = {
   email: string;
@@ -40,7 +50,9 @@ export type SocialSettings = {
   vimeo: string;
 };
 
-export type InstagramFeed = { images: string[] };
+export type InstagramFeed = {
+  images: string[];
+};
 
 export type Service = {
   id: string;
@@ -53,10 +65,27 @@ export type Service = {
 
 export type PortfolioCategory = "Photography" | "Videography";
 
+export type PortfolioSubcategory = {
+  id: string;
+  name: string;
+  slug: string;
+  media_type: PortfolioCategory;
+  description?: string;
+  cover_image?: string;
+  active: boolean;
+  sort_order: number;
+};
+
 export type PortfolioItem = {
   id: string;
   title: string;
-  category: string; // "Photography" | "Videography" (legacy strings normalised on read)
+
+  // Broad portfolio type.
+  category: PortfolioCategory;
+
+  // Custom category created from the admin panel.
+  category_id?: string;
+
   description: string;
   youtube_url: string | null;
   vimeo_url: string | null;
@@ -70,7 +99,13 @@ export type GalleryItem = {
   id: string;
   image_url: string;
   alt: string;
-  category: string;
+
+  // Custom Photography category created from the admin panel.
+  category_id?: string;
+
+  // Kept temporarily for backwards compatibility with existing images.
+  category?: string;
+
   featured: boolean;
   sort_order: number;
 };
@@ -97,7 +132,10 @@ export type Enquiry = {
   created_at: string;
 };
 
-export type PackageAddon = { title: string; price?: string };
+export type PackageAddon = {
+  title: string;
+  price?: string;
+};
 
 export type PackageCategory = "Wedding" | "Events";
 
@@ -112,7 +150,7 @@ export type PackageItem = {
   long_description?: string;
   features: string[];
   addons?: PackageAddon[];
-  category?: string; // "Wedding" | "Events"
+  category?: PackageCategory;
   buttonText: string;
   buttonLink?: string;
   active: boolean;
@@ -147,7 +185,12 @@ export type AboutMainContent = {
   image: string;
 };
 
-export type NavChild = { label: string; href: string; enabled?: boolean };
+export type NavChild = {
+  label: string;
+  href: string;
+  enabled?: boolean;
+};
+
 export type NavItem = {
   id: string;
   label: string;
@@ -155,18 +198,34 @@ export type NavItem = {
   enabled?: boolean;
   children?: NavChild[];
 };
-export type NavConfig = { items: NavItem[] };
+
+export type NavConfig = {
+  items: NavItem[];
+};
 
 export const DEFAULT_NAV: NavConfig = {
   items: [
-    { id: "home", label: "Home", href: "/", enabled: true },
+    {
+      id: "home",
+      label: "Home",
+      href: "/",
+      enabled: true,
+    },
     {
       id: "portfolio",
       label: "Portfolio",
       enabled: true,
       children: [
-        { label: "Photography", href: "/portfolio/photography", enabled: true },
-        { label: "Videography", href: "/portfolio/videography", enabled: true },
+        {
+          label: "Photography",
+          href: "/portfolio/photography",
+          enabled: true,
+        },
+        {
+          label: "Videography",
+          href: "/portfolio/videography",
+          enabled: true,
+        },
       ],
     },
     {
@@ -174,12 +233,30 @@ export const DEFAULT_NAV: NavConfig = {
       label: "Packages",
       enabled: true,
       children: [
-        { label: "Wedding Packages", href: "/packages/weddings", enabled: true },
-        { label: "Events", href: "/packages/events", enabled: true },
+        {
+          label: "Wedding Packages",
+          href: "/packages/weddings",
+          enabled: true,
+        },
+        {
+          label: "Events",
+          href: "/packages/events",
+          enabled: true,
+        },
       ],
     },
-    { id: "about", label: "About", href: "/about", enabled: true },
-    { id: "contact", label: "Contact", href: "/contact", enabled: true },
+    {
+      id: "about",
+      label: "About",
+      href: "/about",
+      enabled: true,
+    },
+    {
+      id: "contact",
+      label: "Contact",
+      href: "/contact",
+      enabled: true,
+    },
   ],
 };
 
@@ -197,15 +274,36 @@ export type SiteBundle = {
   services: Service[];
   featured_portfolio: PortfolioItem[];
   featured_gallery: GalleryItem[];
+
+  // Dynamic categories created from the admin panel.
+  portfolio_categories: PortfolioSubcategory[];
+
   testimonials: Testimonial[];
   packages: PackageItem[];
   addons: AddOnItem[];
   layout?: HomepageSection[];
 };
 
-export const PORTFOLIO_CATEGORIES = ["Photography", "Videography"] as const;
-export const PACKAGE_CATEGORIES = ["Wedding", "Events"] as const;
-export const GALLERY_CATEGORIES = ["Weddings", "Engagements", "Portraits", "Behind the Scenes"] as const;
+export const PORTFOLIO_CATEGORIES = [
+  "Photography",
+  "Videography",
+] as const;
+
+export const PACKAGE_CATEGORIES = [
+  "Wedding",
+  "Events",
+] as const;
+
+/**
+ * Legacy categories retained temporarily so existing code does not break.
+ * New photography categories should come from portfolio_categories.
+ */
+export const GALLERY_CATEGORIES = [
+  "Weddings",
+  "Engagements",
+  "Portraits",
+  "Behind the Scenes",
+] as const;
 
 export type HeadingConfig = {
   eyebrow?: string;
@@ -225,9 +323,17 @@ export type HeadingConfig = {
 };
 
 export type HomepageSectionId =
-  | "hero" | "about" | "services" | "packages" | "addons"
-  | "portfolio" | "gallery" | "whychoose" | "testimonials"
-  | "instagram" | "contact";
+  | "hero"
+  | "about"
+  | "services"
+  | "packages"
+  | "addons"
+  | "portfolio"
+  | "gallery"
+  | "whychoose"
+  | "testimonials"
+  | "instagram"
+  | "contact";
 
 export type HomepageSection = {
   id: HomepageSectionId;
@@ -238,15 +344,81 @@ export type HomepageSection = {
 };
 
 export const DEFAULT_HOMEPAGE_SECTIONS: HomepageSection[] = [
-  { id: "hero", label: "Hero", enabled: true, sort_order: 1, heading: {} },
-  { id: "about", label: "About", enabled: true, sort_order: 2, heading: {} },
-  { id: "services", label: "Services", enabled: true, sort_order: 3, heading: {} },
-  { id: "packages", label: "Packages", enabled: true, sort_order: 4, heading: {} },
-  { id: "addons", label: "Add-ons", enabled: true, sort_order: 5, heading: {} },
-  { id: "portfolio", label: "Portfolio", enabled: true, sort_order: 6, heading: {} },
-  { id: "gallery", label: "Gallery", enabled: true, sort_order: 7, heading: {} },
-  { id: "whychoose", label: "Why Choose", enabled: true, sort_order: 8, heading: {} },
-  { id: "testimonials", label: "Testimonials", enabled: true, sort_order: 9, heading: {} },
-  { id: "instagram", label: "Instagram / Social Feed", enabled: true, sort_order: 10, heading: {} },
-  { id: "contact", label: "Contact / Enquiry", enabled: true, sort_order: 11, heading: {} },
+  {
+    id: "hero",
+    label: "Hero",
+    enabled: true,
+    sort_order: 1,
+    heading: {},
+  },
+  {
+    id: "about",
+    label: "About",
+    enabled: true,
+    sort_order: 2,
+    heading: {},
+  },
+  {
+    id: "services",
+    label: "Services",
+    enabled: true,
+    sort_order: 3,
+    heading: {},
+  },
+  {
+    id: "packages",
+    label: "Packages",
+    enabled: true,
+    sort_order: 4,
+    heading: {},
+  },
+  {
+    id: "addons",
+    label: "Add-ons",
+    enabled: true,
+    sort_order: 5,
+    heading: {},
+  },
+  {
+    id: "portfolio",
+    label: "Portfolio",
+    enabled: true,
+    sort_order: 6,
+    heading: {},
+  },
+  {
+    id: "gallery",
+    label: "Gallery",
+    enabled: true,
+    sort_order: 7,
+    heading: {},
+  },
+  {
+    id: "whychoose",
+    label: "Why Choose",
+    enabled: true,
+    sort_order: 8,
+    heading: {},
+  },
+  {
+    id: "testimonials",
+    label: "Testimonials",
+    enabled: true,
+    sort_order: 9,
+    heading: {},
+  },
+  {
+    id: "instagram",
+    label: "Instagram / Social Feed",
+    enabled: true,
+    sort_order: 10,
+    heading: {},
+  },
+  {
+    id: "contact",
+    label: "Contact / Enquiry",
+    enabled: true,
+    sort_order: 11,
+    heading: {},
+  },
 ];
