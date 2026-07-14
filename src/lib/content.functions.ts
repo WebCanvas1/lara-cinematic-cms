@@ -3,6 +3,7 @@ import { api } from "./api";
 import type {
   Service,
   PortfolioItem,
+  PortfolioSubcategory,
   GalleryItem,
   Testimonial,
   PackageItem,
@@ -15,74 +16,259 @@ import type {
 
 type Result = { ok: true };
 
-export const submitEnquiry = ({ data }: { data: Record<string, string> }) =>
-  api.post<Result>("/api/enquiry", data);
+export const submitEnquiry = ({
+  data,
+}: {
+  data: Record<string, string>;
+}) => api.post<Result>("/api/enquiry", data);
 
-export const upsertContent = ({ data }: { data: { key: string; value: unknown } }) =>
-  api.post<Result>("/api/content", data);
+export const upsertContent = ({
+  data,
+}: {
+  data: { key: string; value: unknown };
+}) => api.post<Result>("/api/content", data);
 
-export const upsertSettings = ({ data }: { data: { key: string; value: unknown } }) =>
-  api.post<Result>("/api/settings", data);
+export const upsertSettings = ({
+  data,
+}: {
+  data: { key: string; value: unknown };
+}) => api.post<Result>("/api/settings", data);
 
-export const upsertService = ({ data }: { data: Partial<Service> }) =>
-  api.post<Result>("/api/services", { action: "upsert", item: data });
+export const upsertService = ({
+  data,
+}: {
+  data: Partial<Service>;
+}) =>
+  api.post<Result>("/api/services", {
+    action: "upsert",
+    item: data,
+  });
 
-export const deleteService = ({ data }: { data: { id: string } }) =>
-  api.post<Result>("/api/services", { action: "delete", id: data.id });
+export const deleteService = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/services", {
+    action: "delete",
+    id: data.id,
+  });
 
-export const upsertPortfolio = ({ data }: { data: Partial<PortfolioItem> }) =>
-  api.post<Result>("/api/portfolio", { action: "upsert", item: data });
+export const upsertPortfolio = ({
+  data,
+}: {
+  data: Partial<PortfolioItem>;
+}) =>
+  api.post<Result>("/api/portfolio", {
+    action: "upsert",
+    item: data,
+  });
 
-export const deletePortfolio = ({ data }: { data: { id: string } }) =>
-  api.post<Result>("/api/portfolio", { action: "delete", id: data.id });
+export const deletePortfolio = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/portfolio", {
+    action: "delete",
+    id: data.id,
+  });
 
-export const upsertGalleryItem = ({ data }: { data: Partial<GalleryItem> }) =>
-  api.post<Result>("/api/gallery", { action: "upsert", item: data });
+export const upsertPortfolioCategory = ({
+  data,
+}: {
+  data: Partial<PortfolioSubcategory>;
+}) =>
+  api.post<Result>("/api/portfolio-categories", {
+    action: "upsert",
+    item: data,
+  });
 
-export const deleteGalleryItem = ({ data }: { data: { id: string } }) =>
-  api.post<Result>("/api/gallery", { action: "delete", id: data.id });
+export const deletePortfolioCategory = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/portfolio-categories", {
+    action: "delete",
+    id: data.id,
+  });
 
-export const upsertTestimonial = ({ data }: { data: Partial<Testimonial> }) =>
-  api.post<Result>("/api/testimonials", { action: "upsert", item: data });
+export const reorderPortfolioCategories = ({
+  data,
+}: {
+  data: { ids: string[] };
+}) =>
+  api.post<Result>("/api/portfolio-categories", {
+    action: "reorder",
+    ids: data.ids,
+  });
 
-export const deleteTestimonial = ({ data }: { data: { id: string } }) =>
-  api.post<Result>("/api/testimonials", { action: "delete", id: data.id });
+export const upsertGalleryItem = ({
+  data,
+}: {
+  data: Partial<GalleryItem>;
+}) =>
+  api.post<Result>("/api/gallery", {
+    action: "upsert",
+    item: data,
+  });
 
-export const upsertPackage = ({ data }: { data: Partial<PackageItem> }) =>
-  api.post<Result>("/api/packages", { action: "upsert", item: data });
+export const deleteGalleryItem = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/gallery", {
+    action: "delete",
+    id: data.id,
+  });
 
-export const deletePackage = ({ data }: { data: { id: string } }) =>
-  api.post<Result>("/api/packages", { action: "delete", id: data.id });
+export const upsertTestimonial = ({
+  data,
+}: {
+  data: Partial<Testimonial>;
+}) =>
+  api.post<Result>("/api/testimonials", {
+    action: "upsert",
+    item: data,
+  });
 
-export const upsertAddon = ({ data }: { data: Partial<AddOnItem> }) =>
-  api.post<Result>("/api/addons", { action: "upsert", item: data });
+export const deleteTestimonial = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/testimonials", {
+    action: "delete",
+    id: data.id,
+  });
 
-export const deleteAddon = ({ data }: { data: { id: string } }) =>
-  api.post<Result>("/api/addons", { action: "delete", id: data.id });
+export const upsertPackage = ({
+  data,
+}: {
+  data: Partial<PackageItem>;
+}) =>
+  api.post<Result>("/api/packages", {
+    action: "upsert",
+    item: data,
+  });
+
+export const deletePackage = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/packages", {
+    action: "delete",
+    id: data.id,
+  });
+
+export const upsertAddon = ({
+  data,
+}: {
+  data: Partial<AddOnItem>;
+}) =>
+  api.post<Result>("/api/addons", {
+    action: "upsert",
+    item: data,
+  });
+
+export const deleteAddon = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/addons", {
+    action: "delete",
+    id: data.id,
+  });
 
 export const reorderItems = ({
   data,
 }: {
-  data: { table: "services" | "portfolio" | "gallery" | "testimonials" | "packages" | "addons"; ids: string[] };
-}) => api.post<Result>(`/api/${data.table}`, { action: "reorder", ids: data.ids });
+  data: {
+    table:
+      | "services"
+      | "portfolio"
+      | "portfolio-categories"
+      | "gallery"
+      | "testimonials"
+      | "packages"
+      | "addons";
+    ids: string[];
+  };
+}) =>
+  api.post<Result>(`/api/${data.table}`, {
+    action: "reorder",
+    ids: data.ids,
+  });
 
-export const deleteEnquiry = ({ data }: { data: { id: string } }) =>
-  api.post<Result>("/api/enquiry", { action: "delete", id: data.id });
+export const deleteEnquiry = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/enquiry", {
+    action: "delete",
+    id: data.id,
+  });
 
-export const saveHomepageLayout = ({ data }: { data: { items: HomepageSection[] } }) =>
-  api.post<Result>("/api/homepage-layout", { items: data.items });
+export const saveHomepageLayout = ({
+  data,
+}: {
+  data: { items: HomepageSection[] };
+}) =>
+  api.post<Result>("/api/homepage-layout", {
+    items: data.items,
+  });
 
-export const upsertTeamMember = ({ data }: { data: Partial<TeamMember> }) =>
-  api.post<Result>("/api/team", { action: "upsert", item: data });
+export const upsertTeamMember = ({
+  data,
+}: {
+  data: Partial<TeamMember>;
+}) =>
+  api.post<Result>("/api/team", {
+    action: "upsert",
+    item: data,
+  });
 
-export const deleteTeamMember = ({ data }: { data: { id: string } }) =>
-  api.post<Result>("/api/team", { action: "delete", id: data.id });
+export const deleteTeamMember = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/team", {
+    action: "delete",
+    id: data.id,
+  });
 
-export const reorderTeam = ({ data }: { data: { ids: string[] } }) =>
-  api.post<Result>("/api/team", { action: "reorder", ids: data.ids });
+export const reorderTeam = ({
+  data,
+}: {
+  data: { ids: string[] };
+}) =>
+  api.post<Result>("/api/team", {
+    action: "reorder",
+    ids: data.ids,
+  });
 
-export const saveNav = ({ data }: { data: NavConfig }) =>
-  api.post<Result>("/api/content", { key: "navigation", value: data });
+export const saveNav = ({
+  data,
+}: {
+  data: NavConfig;
+}) =>
+  api.post<Result>("/api/content", {
+    key: "navigation",
+    value: data,
+  });
 
-export const saveAboutMain = ({ data }: { data: AboutMainContent }) =>
-  api.post<Result>("/api/content", { key: "about_main", value: data });
+export const saveAboutMain = ({
+  data,
+}: {
+  data: AboutMainContent;
+}) =>
+  api.post<Result>("/api/content", {
+    key: "about_main",
+    value: data,
+  });
