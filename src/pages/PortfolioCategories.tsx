@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { siteBundleQuery } from "@/lib/queries";
