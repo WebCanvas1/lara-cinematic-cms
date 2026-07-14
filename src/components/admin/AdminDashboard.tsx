@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { LogOut, ExternalLink, Plus, Trash2, GripVertical, Save, BarChart3, Users, Eye, MousePointerClick, Clock3, Radio } from "lucide-react";
 import {
@@ -17,6 +16,7 @@ import {
   upsertTestimonial, deleteTestimonial, reorderItems, deleteEnquiry,
   upsertPackage, deletePackage, upsertAddon, deleteAddon, saveHomepageLayout,
   upsertTeamMember, deleteTeamMember, reorderTeam, saveNav, saveAboutMain,
+  upsertPortfolioCategory, deletePortfolioCategory, reorderPortfolioCategories,
 } from "@/lib/content.functions";
 import { lockAdmin } from "@/lib/admin.functions";
 import { fetchAnalytics, type AnalyticsData, type AnalyticsRange } from "@/lib/analytics";
@@ -24,13 +24,12 @@ import { compressToDataUrl } from "@/lib/image-upload";
 import { ImagePicker } from "./ImagePicker";
 import { PageHeader, Field, TextInput, TextArea, SelectInput, PrimaryButton, SecondaryButton, DangerButton, Card } from "./ui";
 import {
-  PORTFOLIO_CATEGORIES,
   PACKAGE_CATEGORIES,
-  GALLERY_CATEGORIES,
   DEFAULT_HOMEPAGE_SECTIONS,
   DEFAULT_NAV,
   type Service,
   type PortfolioItem,
+  type PortfolioSubcategory,
   type GalleryItem,
   type Testimonial,
   type PackageItem,
@@ -44,13 +43,12 @@ import {
   type NavItem,
 } from "@/lib/site-types";
 
-const TABS = ["Overview", "Analytics", "Homepage Layout", "Hero", "About", "Team", "Navigation", "Services", "Packages", "Add-ons", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
+const TABS = ["Overview", "Analytics", "Homepage Layout", "Hero", "About", "Team", "Navigation", "Services", "Packages", "Add-ons", "Portfolio Categories", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
 type Tab = typeof TABS[number];
 
 export function AdminDashboard() {
   const [tab, setTab] = useState<Tab>("Overview");
   const qc = useQueryClient();
-  const navigate = useNavigate();
   const lock = useServerFn(lockAdmin);
   const { data, isLoading } = useQuery(adminAllQuery);
 
@@ -139,8 +137,25 @@ export function AdminDashboard() {
             {tab === "Services" && <ServicesTab services={bundle.services as Service[]} />}
             {tab === "Packages" && <PackagesTab items={(bundle.packages ?? []) as PackageItem[]} />}
             {tab === "Add-ons" && <AddOnsTab items={(bundle.addons ?? []) as AddOnItem[]} />}
-            {tab === "Portfolio" && <PortfolioTab items={bundle.portfolio as PortfolioItem[]} />}
-            {tab === "Gallery" && <GalleryTab items={bundle.gallery as GalleryItem[]} />}
+            {tab === "Portfolio Categories" && (
+              <PortfolioCategoriesTab
+                items={(bundle.portfolio_categories ?? []) as PortfolioSubcategory[]}
+                portfolio={bundle.portfolio as PortfolioItem[]}
+                gallery={bundle.gallery as GalleryItem[]}
+              />
+            )}
+            {tab === "Portfolio" && (
+              <PortfolioTab
+                items={bundle.portfolio as PortfolioItem[]}
+                categories={(bundle.portfolio_categories ?? []) as PortfolioSubcategory[]}
+              />
+            )}
+            {tab === "Gallery" && (
+              <GalleryTab
+                items={bundle.gallery as GalleryItem[]}
+                categories={(bundle.portfolio_categories ?? []) as PortfolioSubcategory[]}
+              />
+            )}
             {tab === "Testimonials" && <TestimonialsTab items={bundle.testimonials as Testimonial[]} />}
             {tab === "Why Choose" && <WhyChooseTab initial={bySection(bundle.content, "why_choose")} />}
             {tab === "Contact & Social" && <ContactSocialTab settings={bundle.settings} />}
@@ -782,49 +797,441 @@ function ServicesTab({ services }: { services: Service[] }) {
   );
 }
 
-// -------------- Portfolio --------------
-function PortfolioTab({ items }: { items: PortfolioItem[] }) {
+// -------------- Portfolio Categories --------------
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function PortfolioCategoriesTab({
+  items,
+  portfolio,
+  gallery,
+}: {
+  items: PortfolioSubcategory[];
+  portfolio: PortfolioItem[];
+  gallery: GalleryItem[];
+}) {
+  const qc = useQueryClient();
+  const up = useServerFn(upsertPortfolioCategory);
+  const del = useServerFn(deletePortfolioCategory);
+  const reorder = useServerFn(reorderPortfolioCategories);
+  const [editing, setEditing] = useState<Partial<PortfolioSubcategory> | null>(null);
+  const [filter, setFilter] = useState<"All" | "Photography" | "Videography">("All");
+  const [order, setOrder] = useState(items.map((item) => item.id));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  useEffect(() => {
+    setOrder(items.map((item) => item.id));
+  }, [items]);
+
+  const sortedItems = order
+    .map((id) => items.find((item) => item.id === id))
+    .filter(Boolean) as PortfolioSubcategory[];
+
+  const visibleItems =
+    filter === "All"
+      ? sortedItems
+      : sortedItems.filter((item) => item.media_type === filter);
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = order.indexOf(String(active.id));
+    const newIndex = order.indexOf(String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const next = arrayMove(order, oldIndex, newIndex);
+    setOrder(next);
+
+    try {
+      await reorder({ data: { ids: next } });
+      toast.success("Category order saved");
+      qc.invalidateQueries();
+    } catch {
+      toast.error("Could not reorder categories");
+    }
+  }
+
+  async function saveCategory(category: Partial<PortfolioSubcategory>) {
+    const name = (category.name || "").trim();
+    if (!name) {
+      toast.error("Category name is required");
+      return;
+    }
+
+    const mediaType = category.media_type || "Photography";
+    const slug = slugify(category.slug || name);
+    if (!slug) {
+      toast.error("Please enter a valid category name or slug");
+      return;
+    }
+
+    const duplicate = items.some(
+      (item) =>
+        item.id !== category.id &&
+        item.media_type === mediaType &&
+        item.slug.toLowerCase() === slug.toLowerCase(),
+    );
+
+    if (duplicate) {
+      toast.error(`A ${mediaType.toLowerCase()} category with this slug already exists`);
+      return;
+    }
+
+    try {
+      await up({
+        data: {
+          id: category.id,
+          name,
+          slug,
+          media_type: mediaType,
+          description: category.description || "",
+          cover_image: category.cover_image || "",
+          active: category.active ?? true,
+          sort_order: category.sort_order ?? items.length + 1,
+        },
+      });
+      setEditing(null);
+      toast.success("Portfolio category saved");
+      qc.invalidateQueries();
+    } catch {
+      toast.error("Could not save portfolio category");
+    }
+  }
+
+  async function removeCategory(category: PortfolioSubcategory) {
+    const photoCount = gallery.filter((item) => item.category_id === category.id).length;
+    const videoCount = portfolio.filter((item) => item.category_id === category.id).length;
+    const total = photoCount + videoCount;
+
+    if (total > 0) {
+      toast.error(
+        `This category contains ${total} media item${total === 1 ? "" : "s"}. Reassign them before deleting the category.`,
+      );
+      return;
+    }
+
+    if (!confirm(`Delete the category "${category.name}"?`)) return;
+
+    try {
+      await del({ data: { id: category.id } });
+      toast.success("Portfolio category deleted");
+      qc.invalidateQueries();
+    } catch {
+      toast.error("Could not delete portfolio category");
+    }
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Portfolio Categories"
+        subtitle="Create categories such as Weddings, Baby Showers, Engagements, and Corporate for Photography or Videography."
+        actions={
+          <PrimaryButton
+            onClick={() =>
+              setEditing({
+                name: "",
+                slug: "",
+                media_type: filter === "All" ? "Photography" : filter,
+                description: "",
+                cover_image: "",
+                active: true,
+                sort_order: items.length + 1,
+              })
+            }
+          >
+            <Plus className="h-3.5 w-3.5" /> New category
+          </PrimaryButton>
+        }
+      />
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        {(["All", "Photography", "Videography"] as const).map((value) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setFilter(value)}
+            className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em] transition-colors ${
+              filter === value
+                ? "border-ink bg-ink text-cream"
+                : "border-border bg-background text-foreground/70 hover:border-ink hover:text-ink"
+            }`}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={order} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {visibleItems.map((category) => {
+              const mediaCount =
+                category.media_type === "Photography"
+                  ? gallery.filter((item) => item.category_id === category.id).length
+                  : portfolio.filter((item) => item.category_id === category.id).length;
+
+              return (
+                <SortableItem key={category.id} id={category.id}>
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex min-w-0 flex-1 gap-4">
+                      {category.cover_image ? (
+                        <img
+                          src={category.cover_image}
+                          alt=""
+                          className="h-20 w-28 shrink-0 rounded-2xl object-cover"
+                        />
+                      ) : (
+                        <div className="h-20 w-28 shrink-0 rounded-2xl border border-border bg-cream" />
+                      )}
+
+                      <div className="min-w-0">
+                        <div className="font-serif text-lg text-ink">{category.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {category.media_type} · /{category.slug} · {mediaCount} media item
+                          {mediaCount === 1 ? "" : "s"} · {category.active ? "Active" : "Hidden"}
+                        </div>
+                        {category.description && (
+                          <p className="mt-2 line-clamp-2 text-sm text-foreground/70">
+                            {category.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <SecondaryButton onClick={() => setEditing(category)}>Edit</SecondaryButton>
+                      <DangerButton onClick={() => removeCategory(category)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </DangerButton>
+                    </div>
+                  </div>
+                </SortableItem>
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {visibleItems.length === 0 && (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          No {filter === "All" ? "" : `${filter.toLowerCase()} `}categories yet.
+        </p>
+      )}
+
+      {editing && (
+        <Modal
+          title={editing.id ? "Edit portfolio category" : "New portfolio category"}
+          onClose={() => setEditing(null)}
+        >
+          <Field label="Portfolio type">
+            <SelectInput
+              value={editing.media_type || "Photography"}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  media_type: event.target.value as PortfolioSubcategory["media_type"],
+                })
+              }
+            >
+              <option value="Photography">Photography</option>
+              <option value="Videography">Videography</option>
+            </SelectInput>
+          </Field>
+
+          <Field label="Category name">
+            <TextInput
+              value={editing.name || ""}
+              onChange={(event) => {
+                const name = event.target.value;
+                setEditing({
+                  ...editing,
+                  name,
+                  slug: editing.id ? editing.slug : slugify(name),
+                });
+              }}
+              placeholder="e.g. Baby Showers"
+            />
+          </Field>
+
+          <Field label="URL slug">
+            <TextInput
+              value={editing.slug || ""}
+              onChange={(event) =>
+                setEditing({ ...editing, slug: slugify(event.target.value) })
+              }
+              placeholder="baby-showers"
+            />
+          </Field>
+
+          <Field label="Description">
+            <TextArea
+              rows={4}
+              value={editing.description || ""}
+              onChange={(event) =>
+                setEditing({ ...editing, description: event.target.value })
+              }
+            />
+          </Field>
+
+          <ImagePicker
+            label="Category cover image"
+            value={editing.cover_image || ""}
+            onChange={(cover_image) => setEditing({ ...editing, cover_image })}
+          />
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={editing.active ?? true}
+              onChange={(event) =>
+                setEditing({ ...editing, active: event.target.checked })
+              }
+            />
+            Active
+          </label>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton>
+            <PrimaryButton onClick={() => saveCategory(editing)}>Save</PrimaryButton>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// -------------- Portfolio / Videography --------------
+function PortfolioTab({
+  items,
+  categories,
+}: {
+  items: PortfolioItem[];
+  categories: PortfolioSubcategory[];
+}) {
   const qc = useQueryClient();
   const up = useServerFn(upsertPortfolio);
   const del = useServerFn(deletePortfolio);
   const { sortedItems, onDragEnd, sensors, order } = useSortableItems(items, "portfolio");
   const [editing, setEditing] = useState<Partial<PortfolioItem> | null>(null);
 
-  async function save(v: Partial<PortfolioItem>) {
-    await up({ data: {
-      id: v.id, title: v.title || "Untitled", category: v.category || "Weddings", description: v.description || "",
-      youtube_url: v.youtube_url || null, vimeo_url: v.vimeo_url || null,
-      thumbnail_url: v.thumbnail_url || null, cover_url: v.cover_url || null,
-      featured: v.featured ?? false, sort_order: v.sort_order ?? items.length,
-    }});
-    setEditing(null); qc.invalidateQueries(); toast.success("Saved");
+  const videoCategories = categories
+    .filter((category) => category.media_type === "Videography" && category.active !== false)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+  const categoryName = (categoryId?: string) =>
+    videoCategories.find((category) => category.id === categoryId)?.name || "Uncategorised";
+
+  async function save(item: Partial<PortfolioItem>) {
+    try {
+      await up({
+        data: {
+          id: item.id,
+          title: item.title || "Untitled",
+          category: "Videography",
+          category_id: item.category_id || undefined,
+          description: item.description || "",
+          youtube_url: item.youtube_url || null,
+          vimeo_url: item.vimeo_url || null,
+          thumbnail_url: item.thumbnail_url || null,
+          cover_url: item.cover_url || null,
+          featured: item.featured ?? false,
+          sort_order: item.sort_order ?? items.length,
+        },
+      });
+      setEditing(null);
+      qc.invalidateQueries();
+      toast.success("Video saved");
+    } catch {
+      toast.error("Could not save video");
+    }
   }
 
   return (
     <div>
-      <PageHeader title="Portfolio" subtitle="Films appear on the portfolio page. Featured films also show on the homepage." actions={
-        <PrimaryButton onClick={() => setEditing({ title: "", category: "Weddings", featured: false, sort_order: items.length })}>
-          <Plus className="h-3.5 w-3.5" /> New film
-        </PrimaryButton>
-      } />
+      <PageHeader
+        title="Videography"
+        subtitle="Add videos and assign each one to a Videography category."
+        actions={
+          <PrimaryButton
+            onClick={() =>
+              setEditing({
+                title: "",
+                category: "Videography",
+                category_id: videoCategories[0]?.id,
+                featured: false,
+                sort_order: items.length,
+              })
+            }
+          >
+            <Plus className="h-3.5 w-3.5" /> New video
+          </PrimaryButton>
+        }
+      />
+
+      {videoCategories.length === 0 && (
+        <Card>
+          <p className="text-sm text-foreground/70">
+            Create a Videography category in the Portfolio Categories tab before adding videos.
+          </p>
+        </Card>
+      )}
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={order} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
-            {sortedItems.map((p) => (
-              <SortableItem key={p.id} id={p.id}>
+            {sortedItems.map((item) => (
+              <SortableItem key={item.id} id={item.id}>
                 <div className="flex flex-wrap items-start gap-4">
-                  {p.thumbnail_url && <img src={p.thumbnail_url} alt="" className="h-20 w-32 object-cover" />}
+                  {item.thumbnail_url ? (
+                    <img
+                      src={item.thumbnail_url}
+                      alt=""
+                      className="h-20 w-32 rounded-xl object-cover"
+                    />
+                  ) : (
+                    <div className="h-20 w-32 rounded-xl border border-border bg-cream" />
+                  )}
+
                   <div className="flex-1">
-                    <div className="font-serif text-lg text-ink">{p.title} {p.featured && <span className="ml-2 text-[0.65rem] uppercase tracking-widest text-gold">Featured</span>}</div>
-                    <div className="text-xs text-muted-foreground">{p.category}</div>
-                    <p className="mt-1 line-clamp-2 text-sm text-foreground/70">{p.description}</p>
+                    <div className="font-serif text-lg text-ink">
+                      {item.title}
+                      {item.featured && (
+                        <span className="ml-2 text-[0.65rem] uppercase tracking-widest text-gold">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {categoryName(item.category_id)}
+                    </div>
+                    <p className="mt-1 line-clamp-2 text-sm text-foreground/70">
+                      {item.description}
+                    </p>
                   </div>
+
                   <div className="flex gap-2">
-                    <SecondaryButton onClick={() => setEditing(p)}>Edit</SecondaryButton>
-                    <DangerButton onClick={async () => {
-                      if (!confirm("Delete this film?")) return;
-                      await del({ data: { id: p.id } }); qc.invalidateQueries(); toast.success("Deleted");
-                    }}><Trash2 className="h-3.5 w-3.5" /></DangerButton>
+                    <SecondaryButton onClick={() => setEditing(item)}>Edit</SecondaryButton>
+                    <DangerButton
+                      onClick={async () => {
+                        if (!confirm("Delete this video?")) return;
+                        try {
+                          await del({ data: { id: item.id } });
+                          qc.invalidateQueries();
+                          toast.success("Video deleted");
+                        } catch {
+                          toast.error("Could not delete video");
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </DangerButton>
                   </div>
                 </div>
               </SortableItem>
@@ -833,83 +1240,272 @@ function PortfolioTab({ items }: { items: PortfolioItem[] }) {
         </SortableContext>
       </DndContext>
 
-      {editing && <Modal onClose={() => setEditing(null)} title={editing.id ? "Edit film" : "New film"}>
-        <Field label="Title"><TextInput value={editing.title || ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></Field>
-        <Field label="Category">
-          <SelectInput value={editing.category || "Weddings"} onChange={(e) => setEditing({ ...editing, category: e.target.value })}>
-            {PORTFOLIO_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-          </SelectInput>
-        </Field>
-        <Field label="Description"><TextArea rows={3} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
-        <Field label="YouTube URL"><TextInput value={editing.youtube_url || ""} onChange={(e) => setEditing({ ...editing, youtube_url: e.target.value })} /></Field>
-        <Field label="Vimeo URL"><TextInput value={editing.vimeo_url || ""} onChange={(e) => setEditing({ ...editing, vimeo_url: e.target.value })} /></Field>
-        <ImagePicker label="Thumbnail" value={editing.thumbnail_url || ""} onChange={(v) => setEditing({ ...editing, thumbnail_url: v })} />
-        <ImagePicker label="Cover image" value={editing.cover_url || ""} onChange={(v) => setEditing({ ...editing, cover_url: v })} />
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.featured ?? false} onChange={(e) => setEditing({ ...editing, featured: e.target.checked })} /> Feature on homepage</label>
-        <div className="mt-4 flex justify-end gap-2"><SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton><PrimaryButton onClick={() => save(editing)}>Save</PrimaryButton></div>
-      </Modal>}
+      {editing && (
+        <Modal onClose={() => setEditing(null)} title={editing.id ? "Edit video" : "New video"}>
+          <Field label="Title">
+            <TextInput
+              value={editing.title || ""}
+              onChange={(event) => setEditing({ ...editing, title: event.target.value })}
+            />
+          </Field>
+
+          <Field label="Videography category">
+            <SelectInput
+              value={editing.category_id || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  category: "Videography",
+                  category_id: event.target.value || undefined,
+                })
+              }
+            >
+              <option value="">Uncategorised</option>
+              {videoCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </SelectInput>
+          </Field>
+
+          <Field label="Description">
+            <TextArea
+              rows={3}
+              value={editing.description || ""}
+              onChange={(event) =>
+                setEditing({ ...editing, description: event.target.value })
+              }
+            />
+          </Field>
+
+          <Field label="YouTube URL">
+            <TextInput
+              value={editing.youtube_url || ""}
+              onChange={(event) =>
+                setEditing({ ...editing, youtube_url: event.target.value })
+              }
+            />
+          </Field>
+
+          <Field label="Vimeo URL">
+            <TextInput
+              value={editing.vimeo_url || ""}
+              onChange={(event) =>
+                setEditing({ ...editing, vimeo_url: event.target.value })
+              }
+            />
+          </Field>
+
+          <ImagePicker
+            label="Thumbnail"
+            value={editing.thumbnail_url || ""}
+            onChange={(thumbnail_url) => setEditing({ ...editing, thumbnail_url })}
+          />
+
+          <ImagePicker
+            label="Cover image"
+            value={editing.cover_url || ""}
+            onChange={(cover_url) => setEditing({ ...editing, cover_url })}
+          />
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={editing.featured ?? false}
+              onChange={(event) =>
+                setEditing({ ...editing, featured: event.target.checked })
+              }
+            />
+            Feature on homepage
+          </label>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton>
+            <PrimaryButton onClick={() => save(editing)}>Save</PrimaryButton>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
 
-// -------------- Gallery --------------
-function GalleryTab({ items }: { items: GalleryItem[] }) {
+// -------------- Gallery / Photography --------------
+function GalleryTab({
+  items,
+  categories,
+}: {
+  items: GalleryItem[];
+  categories: PortfolioSubcategory[];
+}) {
   const qc = useQueryClient();
   const up = useServerFn(upsertGalleryItem);
   const del = useServerFn(deleteGalleryItem);
   const [busy, setBusy] = useState(false);
+  const [uploadCategoryId, setUploadCategoryId] = useState("");
+
+  const photoCategories = categories
+    .filter((category) => category.media_type === "Photography" && category.active !== false)
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+  useEffect(() => {
+    if (!uploadCategoryId && photoCategories[0]) {
+      setUploadCategoryId(photoCategories[0].id);
+    }
+  }, [photoCategories, uploadCategoryId]);
 
   async function upload(files: FileList | null) {
     if (!files?.length) return;
+
     setBusy(true);
     try {
       let order = items.length;
       for (const file of Array.from(files)) {
         const dataUrl = await compressToDataUrl(file);
-        await up({ data: { image_url: dataUrl, alt: file.name.replace(/\.[^.]+$/, ""), category: "Weddings", featured: false, sort_order: order++ } });
+        await up({
+          data: {
+            image_url: dataUrl,
+            alt: file.name.replace(/\.[^.]+$/, ""),
+            category_id: uploadCategoryId || undefined,
+            featured: false,
+            sort_order: order++,
+          },
+        });
       }
-      qc.invalidateQueries(); toast.success("Images uploaded");
-    } catch { toast.error("Upload failed"); } finally { setBusy(false); }
+      qc.invalidateQueries();
+      toast.success("Images uploaded");
+    } catch {
+      toast.error("Upload failed");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <div>
-      <PageHeader title="Gallery" actions={
-        <label className="inline-flex cursor-pointer items-center gap-2 bg-ink px-5 py-2.5 text-[0.7rem] uppercase tracking-[0.24em] text-background hover:bg-gold">
-          <Plus className="h-3.5 w-3.5" /> {busy ? "Uploading…" : "Upload images"}
-          <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => upload(e.target.files)} disabled={busy} />
-        </label>
-      } />
+      <PageHeader
+        title="Photography"
+        subtitle="Upload photographs and assign each image to a Photography category."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <SelectInput
+              value={uploadCategoryId}
+              onChange={(event) => setUploadCategoryId(event.target.value)}
+            >
+              <option value="">Uncategorised</option>
+              {photoCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </SelectInput>
+
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-[0.7rem] uppercase tracking-[0.24em] text-background hover:bg-gold">
+              <Plus className="h-3.5 w-3.5" /> {busy ? "Uploading…" : "Upload images"}
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => upload(event.target.files)}
+                disabled={busy}
+              />
+            </label>
+          </div>
+        }
+      />
+
+      {photoCategories.length === 0 && (
+        <Card>
+          <p className="text-sm text-foreground/70">
+            Create a Photography category in the Portfolio Categories tab before uploading images.
+          </p>
+        </Card>
+      )}
+
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {items.map((g) => (
-          <div key={g.id} className="group relative border border-border bg-background">
-            <img src={g.image_url} alt={g.alt} className="aspect-square w-full object-cover" />
-            <div className="p-2 space-y-2">
-              <TextInput value={g.alt} onChange={async (e) => {
-                await up({ data: { ...g, alt: e.target.value } });
-                qc.invalidateQueries();
-              }} placeholder="Alt text" />
-              <SelectInput value={g.category} onChange={async (e) => {
-                await up({ data: { ...g, category: e.target.value } });
-                qc.invalidateQueries();
-              }}>
-                {GALLERY_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+        {items.map((item) => (
+          <div key={item.id} className="group relative overflow-hidden rounded-2xl border border-border bg-background">
+            <img src={item.image_url} alt={item.alt} className="aspect-square w-full object-cover" />
+
+            <div className="space-y-2 p-3">
+              <TextInput
+                value={item.alt}
+                onChange={async (event) => {
+                  try {
+                    await up({ data: { ...item, alt: event.target.value } });
+                    qc.invalidateQueries();
+                  } catch {
+                    toast.error("Could not update image");
+                  }
+                }}
+                placeholder="Alt text"
+              />
+
+              <SelectInput
+                value={item.category_id || ""}
+                onChange={async (event) => {
+                  try {
+                    await up({
+                      data: {
+                        ...item,
+                        category_id: event.target.value || undefined,
+                      },
+                    });
+                    qc.invalidateQueries();
+                  } catch {
+                    toast.error("Could not update category");
+                  }
+                }}
+              >
+                <option value="">Uncategorised</option>
+                {photoCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </SelectInput>
+
               <label className="flex items-center gap-2 text-xs">
-                <input type="checkbox" checked={g.featured} onChange={async (e) => {
-                  await up({ data: { ...g, featured: e.target.checked } });
-                  qc.invalidateQueries();
-                }} /> Featured
+                <input
+                  type="checkbox"
+                  checked={item.featured}
+                  onChange={async (event) => {
+                    try {
+                      await up({ data: { ...item, featured: event.target.checked } });
+                      qc.invalidateQueries();
+                    } catch {
+                      toast.error("Could not update image");
+                    }
+                  }}
+                />
+                Featured
               </label>
-              <DangerButton onClick={async () => {
-                if (!confirm("Delete this image?")) return;
-                await del({ data: { id: g.id } }); qc.invalidateQueries();
-              }}><Trash2 className="h-3 w-3" /> Delete</DangerButton>
+
+              <DangerButton
+                onClick={async () => {
+                  if (!confirm("Delete this image?")) return;
+                  try {
+                    await del({ data: { id: item.id } });
+                    qc.invalidateQueries();
+                    toast.success("Image deleted");
+                  } catch {
+                    toast.error("Could not delete image");
+                  }
+                }}
+              >
+                <Trash2 className="h-3 w-3" /> Delete
+              </DangerButton>
             </div>
           </div>
         ))}
       </div>
-      {items.length === 0 && <p className="py-12 text-center text-sm text-muted-foreground">No images yet — upload some to get started.</p>}
+
+      {items.length === 0 && (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          No images yet — upload some to get started.
+        </p>
+      )}
     </div>
   );
 }
