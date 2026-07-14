@@ -1,37 +1,140 @@
-import { json, requireAdmin, type Ctx, type Env } from "../../_lib/env";
+import {
+  json,
+  requireAdmin,
+  type Ctx,
+  type Env,
+} from "../../_lib/env";
 import { readCollection } from "../../_lib/kv";
-import type { Enquiry, HomepageSection, TeamMember } from "../../../src/lib/site-types";
+import type {
+  Enquiry,
+  HomepageSection,
+  PortfolioSubcategory,
+  TeamMember,
+} from "../../../src/lib/site-types";
 
 type Map = Record<string, unknown>;
 
-export const onRequestGet: PagesFunction<Env, string, { isAdmin?: boolean }> = async (ctx) => {
-  const guard = requireAdmin(ctx as unknown as Ctx); if (guard) return guard;
-  const [content, settings, services, portfolio, gallery, testimonials, enquiries, packages, addons, layout, team] = await Promise.all([
+export const onRequestGet: PagesFunction<
+  Env,
+  string,
+  { isAdmin?: boolean }
+> = async (ctx) => {
+  const guard = requireAdmin(ctx as unknown as Ctx);
+
+  if (guard) {
+    return guard;
+  }
+
+  const [
+    content,
+    settings,
+    services,
+    portfolio,
+    portfolioCategories,
+    gallery,
+    testimonials,
+    enquiries,
+    packages,
+    addons,
+    layout,
+    team,
+  ] = await Promise.all([
     readCollection<Map>(ctx.env, "site-content"),
     readCollection<Map>(ctx.env, "settings"),
-    readCollection<{ sort_order?: number }[]>(ctx.env, "services"),
-    readCollection<{ sort_order?: number }[]>(ctx.env, "portfolio"),
-    readCollection<{ sort_order?: number }[]>(ctx.env, "gallery"),
-    readCollection<{ sort_order?: number }[]>(ctx.env, "testimonials"),
-    readCollection<Enquiry[]>(ctx.env, "enquiries"),
-    readCollection<{ sort_order?: number }[]>(ctx.env, "packages"),
-    readCollection<{ sort_order?: number }[]>(ctx.env, "addons"),
-    readCollection<HomepageSection[]>(ctx.env, "homepage-layout"),
-    readCollection<TeamMember[]>(ctx.env, "team"),
+    readCollection<{ sort_order?: number }[]>(
+      ctx.env,
+      "services",
+    ),
+    readCollection<{ sort_order?: number }[]>(
+      ctx.env,
+      "portfolio",
+    ),
+    readCollection<PortfolioSubcategory[]>(
+      ctx.env,
+      "portfolio-categories",
+    ),
+    readCollection<{ sort_order?: number }[]>(
+      ctx.env,
+      "gallery",
+    ),
+    readCollection<{ sort_order?: number }[]>(
+      ctx.env,
+      "testimonials",
+    ),
+    readCollection<Enquiry[]>(
+      ctx.env,
+      "enquiries",
+    ),
+    readCollection<{ sort_order?: number }[]>(
+      ctx.env,
+      "packages",
+    ),
+    readCollection<{ sort_order?: number }[]>(
+      ctx.env,
+      "addons",
+    ),
+    readCollection<HomepageSection[]>(
+      ctx.env,
+      "homepage-layout",
+    ),
+    readCollection<TeamMember[]>(
+      ctx.env,
+      "team",
+    ),
   ]);
-  const asRows = (m: Map) => Object.entries(m).map(([key, value]) => ({ key, value }));
-  const bySort = <T extends { sort_order?: number }>(r: T[]) => [...r].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+
+  const asRows = (map: Map) =>
+    Object.entries(map).map(([key, value]) => ({
+      key,
+      value,
+    }));
+
+  const bySort = <T extends { sort_order?: number }>(
+    rows: T[],
+  ): T[] =>
+    [...rows].sort(
+      (a, b) =>
+        (a.sort_order ?? 0) - (b.sort_order ?? 0),
+    );
+
   return json({
     content: asRows(content),
     settings: asRows(settings),
+
     services: bySort(services),
+
     portfolio: bySort(portfolio),
+
+    portfolio_categories: bySort(
+      portfolioCategories,
+    ),
+
     gallery: bySort(gallery),
+
     testimonials: bySort(testimonials),
-    enquiries: [...enquiries].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 200),
+
+    enquiries: [...enquiries]
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime(),
+      )
+      .slice(0, 200),
+
     packages: bySort(packages),
+
     addons: bySort(addons),
-    layout: bySort(layout as HomepageSection[] as unknown as { sort_order?: number }[]) as unknown as HomepageSection[],
-    team: bySort(team as unknown as { sort_order?: number }[]) as unknown as TeamMember[],
+
+    layout: bySort(
+      layout as HomepageSection[] as unknown as {
+        sort_order?: number;
+      }[],
+    ) as unknown as HomepageSection[],
+
+    team: bySort(
+      team as unknown as {
+        sort_order?: number;
+      }[],
+    ) as unknown as TeamMember[],
   });
 };
