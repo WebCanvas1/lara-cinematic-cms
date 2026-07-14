@@ -11,6 +11,7 @@ import type {
   PackageItem,
   AddOnItem,
   TeamMember,
+  PortfolioSubcategory,
 } from "../../src/lib/site-types";
 import { DEFAULT_HOMEPAGE_SECTIONS, DEFAULT_NAV, type HomepageSection } from "../../src/lib/site-types";
 
@@ -91,6 +92,30 @@ export const DEFAULT_SERVICES: Service[] = [
   { id: "svc-6", title: "Corporate Videos", description: "Polished corporate storytelling — interviews, events, launches.", icon: "Briefcase", sort_order: 6, active: true },
   { id: "svc-7", title: "Event Videography", description: "Editorial coverage for private, cultural, and family events.", icon: "CalendarDays", sort_order: 7, active: true },
   { id: "svc-8", title: "Social Media Reels", description: "Vertical, short-form films crafted for Instagram and TikTok.", icon: "Smartphone", sort_order: 8, active: true },
+];
+
+// Default dynamic portfolio categories used when KV has no saved categories.
+export const DEFAULT_PORTFOLIO_CATEGORIES: PortfolioSubcategory[] = [
+  {
+    id: "photo-uncategorised",
+    name: "Uncategorised",
+    slug: "uncategorised",
+    media_type: "Photography",
+    description: "",
+    cover_image: "",
+    active: true,
+    sort_order: 1,
+  },
+  {
+    id: "video-uncategorised",
+    name: "Uncategorised",
+    slug: "uncategorised",
+    media_type: "Videography",
+    description: "",
+    cover_image: "",
+    active: true,
+    sort_order: 1,
+  },
 ];
 
 export const DEFAULT_PORTFOLIO: PortfolioItem[] = [];
@@ -212,6 +237,7 @@ export const DEFAULTS = {
   settings: DEFAULT_SETTINGS,
   services: DEFAULT_SERVICES,
   portfolio: DEFAULT_PORTFOLIO,
+  "portfolio-categories": DEFAULT_PORTFOLIO_CATEGORIES,
   gallery: DEFAULT_GALLERY,
   testimonials: DEFAULT_TESTIMONIALS,
   enquiries: DEFAULT_ENQUIRIES,
