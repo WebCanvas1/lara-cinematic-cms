@@ -43,7 +43,26 @@ import {
   type NavItem,
 } from "@/lib/site-types";
 
-const TABS = ["Overview", "Analytics", "Homepage Layout", "Hero", "About", "Team", "Navigation", "Services", "Packages", "Add-ons", "Portfolio Categories", "Portfolio", "Gallery", "Testimonials", "Why Choose", "Contact & Social", "Footer", "Enquiries"] as const;
+const TABS = [
+  "Overview",
+  "Analytics",
+  "Homepage Layout",
+  "Hero",
+  "About",
+  "Team",
+  "Navigation",
+  "Services",
+  "Packages",
+  "Add-ons",
+  "Portfolio Categories",
+  "Videography Upload",
+  "Photography Upload",
+  "Testimonials",
+  "Why Choose",
+  "Contact & Social",
+  "Footer",
+  "Enquiries",
+] as const;
 type Tab = typeof TABS[number];
 
 export function AdminDashboard() {
@@ -144,18 +163,18 @@ export function AdminDashboard() {
                 gallery={bundle.gallery as GalleryItem[]}
               />
             )}
-            {tab === "Portfolio" && (
-              <PortfolioTab
-                items={bundle.portfolio as PortfolioItem[]}
-                categories={(bundle.portfolio_categories ?? []) as PortfolioSubcategory[]}
-              />
-            )}
-            {tab === "Gallery" && (
-              <GalleryTab
-                items={bundle.gallery as GalleryItem[]}
-                categories={(bundle.portfolio_categories ?? []) as PortfolioSubcategory[]}
-              />
-            )}
+            {tab === "Videography Upload" && (
+  <PortfolioTab
+    items={bundle.portfolio as PortfolioItem[]}
+    categories={(bundle.portfolio_categories ?? []) as PortfolioSubcategory[]}
+  />
+)}
+            {tab === "Photography Upload" && (
+  <GalleryTab
+    items={bundle.gallery as GalleryItem[]}
+    categories={(bundle.portfolio_categories ?? []) as PortfolioSubcategory[]}
+  />
+)}
             {tab === "Testimonials" && <TestimonialsTab items={bundle.testimonials as Testimonial[]} />}
             {tab === "Why Choose" && <WhyChooseTab initial={bySection(bundle.content, "why_choose")} />}
             {tab === "Contact & Social" && <ContactSocialTab settings={bundle.settings} />}
