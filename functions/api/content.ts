@@ -27,13 +27,11 @@ const sortFeaturedFirst = (
   limit: number,
 ): OrderedItem[] => {
   return [...items]
-    .sort((a, b) => {
-      if (a.featured !== b.featured) {
-        return a.featured ? -1 : 1;
-      }
-
-      return (a.sort_order ?? 0) - (b.sort_order ?? 0);
-    })
+    .filter((item) => item.featured === true)
+    .sort(
+      (a, b) =>
+        (a.sort_order ?? 0) - (b.sort_order ?? 0),
+    )
     .slice(0, limit);
 };
 
