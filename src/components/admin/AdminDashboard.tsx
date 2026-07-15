@@ -1336,7 +1336,7 @@ function PortfolioTab({
                 setEditing({ ...editing, featured: event.target.checked })
               }
             />
-            Feature on homepage
+            Show on Homepage
           </label>
 
           <div className="mt-4 flex justify-end gap-2">
@@ -1498,7 +1498,7 @@ function GalleryTab({
                     }
                   }}
                 />
-                Featured
+                Show on Homepage
               </label>
 
               <DangerButton
