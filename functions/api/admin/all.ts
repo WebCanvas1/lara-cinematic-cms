@@ -9,6 +9,7 @@ import type {
   Enquiry,
   HomepageSection,
   PortfolioSubcategory,
+  PackageSubcategory,
   TeamMember,
 } from "../../../src/lib/site-types";
 
@@ -35,48 +36,64 @@ export const onRequestGet: PagesFunction<
     testimonials,
     enquiries,
     packages,
+    packageCategories,
     addons,
     layout,
     team,
   ] = await Promise.all([
     readCollection<Map>(ctx.env, "site-content"),
     readCollection<Map>(ctx.env, "settings"),
+
     readCollection<{ sort_order?: number }[]>(
       ctx.env,
       "services",
     ),
+
     readCollection<{ sort_order?: number }[]>(
       ctx.env,
       "portfolio",
     ),
+
     readCollection<PortfolioSubcategory[]>(
       ctx.env,
       "portfolio-categories",
     ),
+
     readCollection<{ sort_order?: number }[]>(
       ctx.env,
       "gallery",
     ),
+
     readCollection<{ sort_order?: number }[]>(
       ctx.env,
       "testimonials",
     ),
+
     readCollection<Enquiry[]>(
       ctx.env,
       "enquiries",
     ),
+
     readCollection<{ sort_order?: number }[]>(
       ctx.env,
       "packages",
     ),
+
+    readCollection<PackageSubcategory[]>(
+      ctx.env,
+      "package-categories",
+    ),
+
     readCollection<{ sort_order?: number }[]>(
       ctx.env,
       "addons",
     ),
+
     readCollection<HomepageSection[]>(
       ctx.env,
       "homepage-layout",
     ),
+
     readCollection<TeamMember[]>(
       ctx.env,
       "team",
@@ -122,6 +139,10 @@ export const onRequestGet: PagesFunction<
       .slice(0, 200),
 
     packages: bySort(packages),
+
+    package_categories: bySort(
+      packageCategories,
+    ),
 
     addons: bySort(addons),
 
