@@ -8,6 +8,7 @@ import type {
   Testimonial,
   Enquiry,
   PackageItem,
+  PackageSubcategory,
   AddOnItem,
   HomepageSection,
   TeamMember,
@@ -16,15 +17,26 @@ import type {
 export type AdminBundle = {
   content: { key: string; value: unknown }[];
   settings: { key: string; value: unknown }[];
+
   services: Service[];
+
   portfolio: PortfolioItem[];
   portfolio_categories: PortfolioSubcategory[];
+
   gallery: GalleryItem[];
+
   testimonials: Testimonial[];
+
   enquiries: Enquiry[];
+
   packages: PackageItem[];
+
+  package_categories: PackageSubcategory[];
+
   addons: AddOnItem[];
+
   layout: HomepageSection[];
+
   team: TeamMember[];
 };
 
