@@ -11,6 +11,7 @@ import type {
   HomepageSection,
   TeamMember,
   PortfolioSubcategory,
+  PackageSubcategory,
 } from "../../src/lib/site-types";
 import { DEFAULT_NAV } from "../../src/lib/site-types";
 
@@ -113,6 +114,12 @@ export const onRequestGet: PagesFunction<
       "portfolio-categories",
     );
 
+  const packageCategories =
+  await readCollection<PackageSubcategory[]>(
+    ctx.env,
+    "package-categories",
+  );
+
   const gallery = await readCollection<OrderedItem[]>(
     ctx.env,
     "gallery",
@@ -184,6 +191,13 @@ export const onRequestGet: PagesFunction<
         (a, b) =>
           (a.sort_order ?? 0) - (b.sort_order ?? 0),
       ),
+
+    package_categories: [...packageCategories]
+  .filter((category) => category.active !== false)
+  .sort(
+    (a, b) =>
+      (a.sort_order ?? 0) - (b.sort_order ?? 0),
+  ),
 
     featured_portfolio: sortFeaturedFirst(
       portfolio,
