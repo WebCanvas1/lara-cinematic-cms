@@ -103,7 +103,7 @@ export type GalleryItem = {
   // Custom Photography category created from the admin panel.
   category_id?: string;
 
-  // Kept temporarily for backwards compatibility with existing images.
+  // Retained temporarily for backwards compatibility.
   category?: string;
 
   featured: boolean;
@@ -137,7 +137,29 @@ export type PackageAddon = {
   price?: string;
 };
 
+/**
+ * Legacy package categories retained temporarily for existing package data.
+ */
 export type PackageCategory = "Wedding" | "Events";
+
+/**
+ * Dynamic package category created from the admin panel.
+ *
+ * Examples:
+ * - Wedding Packages
+ * - Corporate Events
+ * - Birthday Packages
+ * - Baby Shower Packages
+ */
+export type PackageSubcategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  cover_image?: string;
+  active: boolean;
+  sort_order: number;
+};
 
 export type PackageItem = {
   id: string;
@@ -150,7 +172,18 @@ export type PackageItem = {
   long_description?: string;
   features: string[];
   addons?: PackageAddon[];
-  category?: PackageCategory;
+
+  /**
+   * Dynamic package category selected in the admin panel.
+   */
+  category_id?: string;
+
+  /**
+   * Legacy Wedding / Events value retained temporarily so existing packages
+   * continue working while they are assigned to dynamic categories.
+   */
+  category?: PackageCategory | string;
+
   buttonText: string;
   buttonLink?: string;
   active: boolean;
@@ -272,14 +305,20 @@ export type SiteBundle = {
   social: SocialSettings;
   instagram_feed: InstagramFeed;
   services: Service[];
+
   featured_portfolio: PortfolioItem[];
   featured_gallery: GalleryItem[];
 
-  // Dynamic categories created from the admin panel.
+  // Dynamic portfolio categories created from the admin panel.
   portfolio_categories: PortfolioSubcategory[];
 
   testimonials: Testimonial[];
+
   packages: PackageItem[];
+
+  // Dynamic package categories created from the admin panel.
+  package_categories: PackageSubcategory[];
+
   addons: AddOnItem[];
   layout?: HomepageSection[];
 };
@@ -289,14 +328,20 @@ export const PORTFOLIO_CATEGORIES = [
   "Videography",
 ] as const;
 
+/**
+ * Legacy package categories retained temporarily so existing package forms,
+ * routes and saved packages do not break during migration.
+ *
+ * New package categories should come from package_categories.
+ */
 export const PACKAGE_CATEGORIES = [
   "Wedding",
   "Events",
 ] as const;
 
 /**
- * Legacy categories retained temporarily so existing code does not break.
- * New photography categories should come from portfolio_categories.
+ * Legacy gallery categories retained temporarily so existing code does not
+ * break. New Photography categories should come from portfolio_categories.
  */
 export const GALLERY_CATEGORIES = [
   "Weddings",
