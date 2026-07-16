@@ -17,6 +17,7 @@ import {
   upsertPackage, deletePackage, upsertAddon, deleteAddon, saveHomepageLayout,
   upsertTeamMember, deleteTeamMember, reorderTeam, saveNav, saveAboutMain,
   upsertPortfolioCategory, deletePortfolioCategory, reorderPortfolioCategories,
+  upsertPackageCategory, deletePackageCategory, reorderPackageCategories,
 } from "@/lib/content.functions";
 import { lockAdmin } from "@/lib/admin.functions";
 import { fetchAnalytics, type AnalyticsData, type AnalyticsRange } from "@/lib/analytics";
@@ -24,7 +25,6 @@ import { compressToDataUrl } from "@/lib/image-upload";
 import { ImagePicker } from "./ImagePicker";
 import { PageHeader, Field, TextInput, TextArea, SelectInput, PrimaryButton, SecondaryButton, DangerButton, Card } from "./ui";
 import {
-  PACKAGE_CATEGORIES,
   DEFAULT_HOMEPAGE_SECTIONS,
   DEFAULT_NAV,
   type Service,
@@ -33,6 +33,7 @@ import {
   type GalleryItem,
   type Testimonial,
   type PackageItem,
+  type PackageSubcategory,
   type AddOnItem,
   type HomepageSection,
   type HeadingConfig,
@@ -52,6 +53,7 @@ const TABS = [
   "Team",
   "Navigation",
   "Services",
+  "Package Categories",
   "Packages",
   "Add-ons",
   "Portfolio Categories",
@@ -154,7 +156,18 @@ export function AdminDashboard() {
               />
             )}
             {tab === "Services" && <ServicesTab services={bundle.services as Service[]} />}
-            {tab === "Packages" && <PackagesTab items={(bundle.packages ?? []) as PackageItem[]} />}
+            {tab === "Package Categories" && (
+              <PackageCategoriesTab
+                items={(bundle.package_categories ?? []) as PackageSubcategory[]}
+                packages={(bundle.packages ?? []) as PackageItem[]}
+              />
+            )}
+            {tab === "Packages" && (
+              <PackagesTab
+                items={(bundle.packages ?? []) as PackageItem[]}
+                categories={(bundle.package_categories ?? []) as PackageSubcategory[]}
+              />
+            )}
             {tab === "Add-ons" && <AddOnsTab items={(bundle.addons ?? []) as AddOnItem[]} />}
             {tab === "Portfolio Categories" && (
               <PortfolioCategoriesTab
@@ -1911,65 +1924,500 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   );
 }
 
-// -------------- Packages --------------
-function PackagesTab({ items }: { items: PackageItem[] }) {
+// -------------- Package Categories --------------
+function PackageCategoriesTab({
+  items,
+  packages,
+}: {
+  items: PackageSubcategory[];
+  packages: PackageItem[];
+}) {
   const qc = useQueryClient();
-  const up = useServerFn(upsertPackage);
-  const del = useServerFn(deletePackage);
-  const { sortedItems, onDragEnd, sensors, order } = useSortableItems(items, "packages");
-  const [editing, setEditing] = useState<Partial<PackageItem> | null>(null);
+  const up = useServerFn(upsertPackageCategory);
+  const del = useServerFn(deletePackageCategory);
+  const reorder = useServerFn(reorderPackageCategories);
+  const [editing, setEditing] = useState<Partial<PackageSubcategory> | null>(null);
+  const [order, setOrder] = useState(items.map((item) => item.id));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
 
-  async function save(v: Partial<PackageItem>) {
-    await up({ data: {
-      id: v.id,
-      name: v.name || "Untitled",
-      subtitle: v.subtitle || "",
-      price: v.price || "",
-      image: v.image || "",
-      badge: v.badge || "",
-      description: v.description || "",
-      long_description: v.long_description || "",
-      category: (v.category as string) || "Wedding",
-      addons: v.addons || [],
-      features: v.features || [],
-      buttonText: v.buttonText || "Enquire Now",
-      buttonLink: v.buttonLink || "/contact",
-      active: v.active ?? true,
-      featured: v.featured ?? false,
-      sort_order: v.sort_order ?? items.length,
-    }});
-    setEditing(null); qc.invalidateQueries(); toast.success("Saved");
+  useEffect(() => {
+    setOrder(items.map((item) => item.id));
+  }, [items]);
+
+  const sortedItems = order
+    .map((id) => items.find((item) => item.id === id))
+    .filter(Boolean) as PackageSubcategory[];
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = order.indexOf(String(active.id));
+    const newIndex = order.indexOf(String(over.id));
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const next = arrayMove(order, oldIndex, newIndex);
+    setOrder(next);
+
+    try {
+      await reorder({ data: { ids: next } });
+      toast.success("Package category order saved");
+      qc.invalidateQueries();
+    } catch {
+      toast.error("Could not reorder package categories");
+    }
+  }
+
+  async function saveCategory(category: Partial<PackageSubcategory>) {
+    const name = (category.name || "").trim();
+    if (!name) {
+      toast.error("Category name is required");
+      return;
+    }
+
+    const slug = slugify(category.slug || name);
+    if (!slug) {
+      toast.error("Please enter a valid category name or slug");
+      return;
+    }
+
+    const duplicate = items.some(
+      (item) =>
+        item.id !== category.id &&
+        item.slug.toLowerCase() === slug.toLowerCase(),
+    );
+
+    if (duplicate) {
+      toast.error("A package category with this URL slug already exists");
+      return;
+    }
+
+    try {
+      await up({
+        data: {
+          id: category.id,
+          name,
+          slug,
+          description: category.description || "",
+          cover_image: category.cover_image || "",
+          active: category.active ?? true,
+          sort_order: category.sort_order ?? items.length + 1,
+        },
+      });
+
+      setEditing(null);
+      toast.success("Package category saved");
+      qc.invalidateQueries();
+    } catch {
+      toast.error("Could not save package category");
+    }
+  }
+
+  async function removeCategory(category: PackageSubcategory) {
+    const packageCount = packages.filter(
+      (item) => item.category_id === category.id,
+    ).length;
+
+    if (packageCount > 0) {
+      toast.error(
+        `This category contains ${packageCount} package${
+          packageCount === 1 ? "" : "s"
+        }. Reassign them before deleting the category.`,
+      );
+      return;
+    }
+
+    if (!confirm(`Delete the category "${category.name}"?`)) return;
+
+    try {
+      await del({ data: { id: category.id } });
+      toast.success("Package category deleted");
+      qc.invalidateQueries();
+    } catch {
+      toast.error("Could not delete package category");
+    }
   }
 
   return (
     <div>
-      <PageHeader title="Packages" subtitle="Investment tiers shown on the homepage." actions={
-        <PrimaryButton onClick={() => setEditing({ name: "", subtitle: "", price: "", features: [], buttonText: "Enquire Now", buttonLink: "/contact", active: true, featured: false, sort_order: items.length })}>
-          <Plus className="h-3.5 w-3.5" /> New package
-        </PrimaryButton>
-      } />
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <PageHeader
+        title="Package Categories"
+        subtitle="Create categories such as Wedding Packages, Corporate Events, Birthdays, and Baby Showers."
+        actions={
+          <PrimaryButton
+            onClick={() =>
+              setEditing({
+                name: "",
+                slug: "",
+                description: "",
+                cover_image: "",
+                active: true,
+                sort_order: items.length + 1,
+              })
+            }
+          >
+            <Plus className="h-3.5 w-3.5" /> New category
+          </PrimaryButton>
+        }
+      />
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
         <SortableContext items={order} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
-            {sortedItems.map((p) => (
-              <SortableItem key={p.id} id={p.id}>
+            {sortedItems.map((category) => {
+              const packageCount = packages.filter(
+                (item) => item.category_id === category.id,
+              ).length;
+
+              return (
+                <SortableItem key={category.id} id={category.id}>
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex min-w-0 flex-1 gap-4">
+                      {category.cover_image ? (
+                        <img
+                          src={category.cover_image}
+                          alt=""
+                          className="h-20 w-28 shrink-0 rounded-2xl object-cover"
+                        />
+                      ) : (
+                        <div className="h-20 w-28 shrink-0 rounded-2xl border border-border bg-cream" />
+                      )}
+
+                      <div className="min-w-0">
+                        <div className="font-serif text-lg text-ink">
+                          {category.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          /{category.slug} · {packageCount} package
+                          {packageCount === 1 ? "" : "s"} ·{" "}
+                          {category.active ? "Active" : "Hidden"}
+                        </div>
+
+                        {category.description && (
+                          <p className="mt-2 line-clamp-2 text-sm text-foreground/70">
+                            {category.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <SecondaryButton onClick={() => setEditing(category)}>
+                        Edit
+                      </SecondaryButton>
+
+                      <DangerButton onClick={() => removeCategory(category)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </DangerButton>
+                    </div>
+                  </div>
+                </SortableItem>
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      {sortedItems.length === 0 && (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          No package categories yet.
+        </p>
+      )}
+
+      {editing && (
+        <Modal
+          title={editing.id ? "Edit package category" : "New package category"}
+          onClose={() => setEditing(null)}
+        >
+          <Field label="Category name">
+            <TextInput
+              value={editing.name || ""}
+              onChange={(event) => {
+                const name = event.target.value;
+                setEditing({
+                  ...editing,
+                  name,
+                  slug: editing.id ? editing.slug : slugify(name),
+                });
+              }}
+              placeholder="e.g. Corporate Events"
+            />
+          </Field>
+
+          <Field label="URL slug">
+            <TextInput
+              value={editing.slug || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  slug: slugify(event.target.value),
+                })
+              }
+              placeholder="corporate-events"
+            />
+          </Field>
+
+          <Field label="Description">
+            <TextArea
+              rows={4}
+              value={editing.description || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  description: event.target.value,
+                })
+              }
+            />
+          </Field>
+
+          <ImagePicker
+            label="Category cover image"
+            value={editing.cover_image || ""}
+            onChange={(cover_image) =>
+              setEditing({ ...editing, cover_image })
+            }
+          />
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={editing.active ?? true}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  active: event.target.checked,
+                })
+              }
+            />
+            Active
+          </label>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <SecondaryButton onClick={() => setEditing(null)}>
+              Cancel
+            </SecondaryButton>
+            <PrimaryButton onClick={() => saveCategory(editing)}>
+              Save
+            </PrimaryButton>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+// -------------- Packages --------------
+function PackagesTab({
+  items,
+  categories,
+}: {
+  items: PackageItem[];
+  categories: PackageSubcategory[];
+}) {
+  const qc = useQueryClient();
+  const up = useServerFn(upsertPackage);
+  const del = useServerFn(deletePackage);
+  const { sortedItems, onDragEnd, sensors, order } = useSortableItems(
+    items,
+    "packages",
+  );
+  const [editing, setEditing] = useState<Partial<PackageItem> | null>(null);
+  const [filterCategoryId, setFilterCategoryId] = useState("all");
+
+  const activeCategories = [...categories]
+    .filter((category) => category.active !== false)
+    .sort(
+      (a, b) =>
+        (a.sort_order ?? 0) - (b.sort_order ?? 0),
+    );
+
+  const categoryName = (categoryId?: string) =>
+    categories.find((category) => category.id === categoryId)?.name ||
+    "Uncategorised";
+
+  const visiblePackages =
+    filterCategoryId === "all"
+      ? sortedItems
+      : sortedItems.filter(
+          (item) => item.category_id === filterCategoryId,
+        );
+
+  async function save(item: Partial<PackageItem>) {
+    try {
+      await up({
+        data: {
+          id: item.id,
+          name: item.name || "Untitled",
+          subtitle: item.subtitle || "",
+          price: item.price || "",
+          image: item.image || "",
+          badge: item.badge || "",
+          description: item.description || "",
+          long_description: item.long_description || "",
+          category_id: item.category_id || undefined,
+
+          // Retained temporarily for backwards compatibility.
+          category: item.category || "Wedding",
+
+          addons: item.addons || [],
+          features: item.features || [],
+          buttonText: item.buttonText || "Enquire Now",
+          buttonLink: item.buttonLink || "/contact",
+          active: item.active ?? true,
+          featured: item.featured ?? false,
+          sort_order: item.sort_order ?? items.length,
+        },
+      });
+
+      setEditing(null);
+      qc.invalidateQueries();
+      toast.success("Package saved");
+    } catch {
+      toast.error("Could not save package");
+    }
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Packages"
+        subtitle="Add packages and assign each one to a package category."
+        actions={
+          <PrimaryButton
+            onClick={() =>
+              setEditing({
+                name: "",
+                subtitle: "",
+                price: "",
+                features: [],
+                addons: [],
+                category_id: activeCategories[0]?.id,
+                buttonText: "Enquire Now",
+                buttonLink: "/contact",
+                active: true,
+                featured: false,
+                sort_order: items.length,
+              })
+            }
+          >
+            <Plus className="h-3.5 w-3.5" /> New package
+          </PrimaryButton>
+        }
+      />
+
+      {activeCategories.length === 0 && (
+        <Card>
+          <p className="text-sm text-foreground/70">
+            Create a category in the Package Categories tab before adding
+            packages.
+          </p>
+        </Card>
+      )}
+
+      <div className="mb-6 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setFilterCategoryId("all")}
+          className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em] transition-colors ${
+            filterCategoryId === "all"
+              ? "border-ink bg-ink text-cream"
+              : "border-border bg-background text-foreground/70 hover:border-ink hover:text-ink"
+          }`}
+        >
+          All
+        </button>
+
+        {activeCategories.map((category) => (
+          <button
+            key={category.id}
+            type="button"
+            onClick={() => setFilterCategoryId(category.id)}
+            className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.18em] transition-colors ${
+              filterCategoryId === category.id
+                ? "border-ink bg-ink text-cream"
+                : "border-border bg-background text-foreground/70 hover:border-ink hover:text-ink"
+            }`}
+          >
+            {category.name}
+          </button>
+        ))}
+      </div>
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={onDragEnd}
+      >
+        <SortableContext items={order} strategy={verticalListSortingStrategy}>
+          <div className="space-y-3">
+            {visiblePackages.map((item) => (
+              <SortableItem key={item.id} id={item.id}>
                 <div className="flex flex-wrap items-start gap-4">
-                  {p.image && <img src={p.image} alt="" className="h-20 w-28 object-cover" />}
+                  {item.image ? (
+                    <img
+                      src={item.image}
+                      alt=""
+                      className="h-20 w-28 rounded-xl object-cover"
+                    />
+                  ) : (
+                    <div className="h-20 w-28 rounded-xl border border-border bg-cream" />
+                  )}
+
                   <div className="flex-1">
                     <div className="font-serif text-lg text-ink">
-                      {p.name}
-                      {p.featured && <span className="ml-2 text-[0.65rem] uppercase tracking-widest text-gold">{p.badge || "Most Popular"}</span>}
-                      {!p.active && <span className="ml-2 text-[0.65rem] uppercase tracking-widest text-muted-foreground">Hidden</span>}
+                      {item.name}
+
+                      {item.featured && (
+                        <span className="ml-2 text-[0.65rem] uppercase tracking-widest text-gold">
+                          {item.badge || "Most Popular"}
+                        </span>
+                      )}
+
+                      {!item.active && (
+                        <span className="ml-2 text-[0.65rem] uppercase tracking-widest text-muted-foreground">
+                          Hidden
+                        </span>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground">{p.subtitle} · {p.price}</div>
-                    {p.description && <p className="mt-1 line-clamp-2 text-sm text-foreground/70">{p.description}</p>}
+
+                    <div className="text-xs text-muted-foreground">
+                      {categoryName(item.category_id)} · {item.subtitle} ·{" "}
+                      {item.price}
+                    </div>
+
+                    {item.description && (
+                      <p className="mt-1 line-clamp-2 text-sm text-foreground/70">
+                        {item.description}
+                      </p>
+                    )}
                   </div>
+
                   <div className="flex gap-2">
-                    <SecondaryButton onClick={() => setEditing(p)}>Edit</SecondaryButton>
-                    <DangerButton onClick={async () => {
-                      if (!confirm("Delete this package?")) return;
-                      await del({ data: { id: p.id } }); qc.invalidateQueries(); toast.success("Deleted");
-                    }}><Trash2 className="h-3.5 w-3.5" /></DangerButton>
+                    <SecondaryButton onClick={() => setEditing(item)}>
+                      Edit
+                    </SecondaryButton>
+
+                    <DangerButton
+                      onClick={async () => {
+                        if (!confirm("Delete this package?")) return;
+
+                        try {
+                          await del({ data: { id: item.id } });
+                          qc.invalidateQueries();
+                          toast.success("Package deleted");
+                        } catch {
+                          toast.error("Could not delete package");
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </DangerButton>
                   </div>
                 </div>
               </SortableItem>
@@ -1978,35 +2426,207 @@ function PackagesTab({ items }: { items: PackageItem[] }) {
         </SortableContext>
       </DndContext>
 
-      {editing && <Modal onClose={() => setEditing(null)} title={editing.id ? "Edit package" : "New package"}>
-        <Field label="Name"><TextInput value={editing.name || ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
-        <Field label="Category">
-          <SelectInput value={editing.category || "Wedding"} onChange={(e) => setEditing({ ...editing, category: e.target.value })}>
-            {PACKAGE_CATEGORIES.map((c) => <option key={c} value={c}>{c === "Wedding" ? "Wedding Packages" : "Events"}</option>)}
-          </SelectInput>
-        </Field>
-        <Field label="Subtitle"><TextInput value={editing.subtitle || ""} onChange={(e) => setEditing({ ...editing, subtitle: e.target.value })} /></Field>
-        <Field label="Price (e.g. £2,250)"><TextInput value={editing.price || ""} onChange={(e) => setEditing({ ...editing, price: e.target.value })} /></Field>
-        <Field label="Badge text (e.g. Most Popular)"><TextInput value={editing.badge || ""} onChange={(e) => setEditing({ ...editing, badge: e.target.value })} /></Field>
-        <Field label="Short description (used on homepage & category page)"><TextArea rows={2} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
-        <Field label="Full description (detail page)"><TextArea rows={5} value={editing.long_description || ""} onChange={(e) => setEditing({ ...editing, long_description: e.target.value })} /></Field>
-        <ImagePicker label="Package image" value={editing.image || ""} onChange={(v) => setEditing({ ...editing, image: v })} />
-        <FeaturesEditor
-          features={editing.features || []}
-          onChange={(features) => setEditing({ ...editing, features })}
-        />
-        <PackageAddonsEditor
-          addons={editing.addons || []}
-          onChange={(addons) => setEditing({ ...editing, addons })}
-        />
-        <Field label="Button text"><TextInput value={editing.buttonText || ""} onChange={(e) => setEditing({ ...editing, buttonText: e.target.value })} /></Field>
-        <Field label="Button link"><TextInput value={editing.buttonLink || ""} onChange={(e) => setEditing({ ...editing, buttonLink: e.target.value })} /></Field>
-        <div className="flex flex-wrap gap-6">
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.featured ?? false} onChange={(e) => setEditing({ ...editing, featured: e.target.checked })} /> Featured (Most Popular)</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.active ?? true} onChange={(e) => setEditing({ ...editing, active: e.target.checked })} /> Active</label>
-        </div>
-        <div className="mt-4 flex justify-end gap-2"><SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton><PrimaryButton onClick={() => save(editing)}>Save</PrimaryButton></div>
-      </Modal>}
+      {visiblePackages.length === 0 && (
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          No packages found in this category.
+        </p>
+      )}
+
+      {editing && (
+        <Modal
+          onClose={() => setEditing(null)}
+          title={editing.id ? "Edit package" : "New package"}
+        >
+          <Field label="Name">
+            <TextInput
+              value={editing.name || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  name: event.target.value,
+                })
+              }
+            />
+          </Field>
+
+          <Field label="Package category">
+            <SelectInput
+              value={editing.category_id || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  category_id: event.target.value || undefined,
+                })
+              }
+            >
+              <option value="">Uncategorised</option>
+
+              {activeCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </SelectInput>
+          </Field>
+
+          <Field label="Subtitle">
+            <TextInput
+              value={editing.subtitle || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  subtitle: event.target.value,
+                })
+              }
+            />
+          </Field>
+
+          <Field label="Price (e.g. £2,250)">
+            <TextInput
+              value={editing.price || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  price: event.target.value,
+                })
+              }
+            />
+          </Field>
+
+          <Field label="Badge text (e.g. Most Popular)">
+            <TextInput
+              value={editing.badge || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  badge: event.target.value,
+                })
+              }
+            />
+          </Field>
+
+          <Field label="Short description (used on homepage and category page)">
+            <TextArea
+              rows={2}
+              value={editing.description || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  description: event.target.value,
+                })
+              }
+            />
+          </Field>
+
+          <Field label="Full description">
+            <TextArea
+              rows={5}
+              value={editing.long_description || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  long_description: event.target.value,
+                })
+              }
+            />
+          </Field>
+
+          <ImagePicker
+            label="Package image"
+            value={editing.image || ""}
+            onChange={(image) =>
+              setEditing({
+                ...editing,
+                image,
+              })
+            }
+          />
+
+          <FeaturesEditor
+            features={editing.features || []}
+            onChange={(features) =>
+              setEditing({
+                ...editing,
+                features,
+              })
+            }
+          />
+
+          <PackageAddonsEditor
+            addons={editing.addons || []}
+            onChange={(addons) =>
+              setEditing({
+                ...editing,
+                addons,
+              })
+            }
+          />
+
+          <Field label="Button text">
+            <TextInput
+              value={editing.buttonText || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  buttonText: event.target.value,
+                })
+              }
+            />
+          </Field>
+
+          <Field label="Button link">
+            <TextInput
+              value={editing.buttonLink || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  buttonLink: event.target.value,
+                })
+              }
+            />
+          </Field>
+
+          <div className="flex flex-wrap gap-6">
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={editing.featured ?? false}
+                onChange={(event) =>
+                  setEditing({
+                    ...editing,
+                    featured: event.target.checked,
+                  })
+                }
+              />
+              Most Popular / Featured
+            </label>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={editing.active ?? true}
+                onChange={(event) =>
+                  setEditing({
+                    ...editing,
+                    active: event.target.checked,
+                  })
+                }
+              />
+              Active
+            </label>
+          </div>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <SecondaryButton onClick={() => setEditing(null)}>
+              Cancel
+            </SecondaryButton>
+
+            <PrimaryButton onClick={() => save(editing)}>
+              Save
+            </PrimaryButton>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
