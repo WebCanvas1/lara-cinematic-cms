@@ -131,13 +131,12 @@ export default function PortfolioCategory({
                 >
                   <article>
                     <VideoEmbed
-                      youtube={film.youtube_url}
-                      vimeo={film.vimeo_url}
-                      thumbnail={
-                        film.thumbnail_url || film.cover_url
-                      }
-                      title={film.title}
-                    />
+  youtube={film.youtube_url}
+  vimeo={film.vimeo_url}
+  videoUrl={film.video_url}
+  thumbnail={film.thumbnail_url || film.cover_url}
+  title={film.title}
+/>
 
                     <div className="mt-5">
                       <div className="text-[0.7rem] uppercase tracking-[0.24em] text-gold">
