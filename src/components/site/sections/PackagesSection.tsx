@@ -2,22 +2,41 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { Reveal } from "../Reveal";
-import type { PackageItem, HeadingConfig } from "@/lib/site-types";
-import { PACKAGE_CATEGORIES } from "@/lib/site-types";
+import type {
+  PackageItem,
+  PackageSubcategory,
+  HeadingConfig,
+} from "@/lib/site-types";
 import { mergeHeading } from "./section-heading";
 
-function packageDetailHref(p: PackageItem): string {
-  const cat = (p.category === "Events" ? "events" : "weddings");
-  return `/packages/${cat}#pkg-${p.id}`;
+function packageDetailHref(
+  packageItem: PackageItem,
+  categories: PackageSubcategory[],
+): string {
+  const category = categories.find(
+    (item) => item.id === packageItem.category_id,
+  );
+
+  if (category) {
+    return `/packages/${category.slug}#pkg-${packageItem.id}`;
+  }
+
+  // Legacy fallback for packages not yet assigned to a dynamic category.
+  const legacySlug =
+    packageItem.category === "Events" ? "events" : "wedding-packages";
+
+  return `/packages/${legacySlug}#pkg-${packageItem.id}`;
 }
 
 export function PackagesSection({
   packages,
+  categories = [],
   heading,
   variant = "full",
   categoryFilter,
 }: {
   packages: PackageItem[];
+  categories?: PackageSubcategory[];
   heading?: HeadingConfig;
   variant?: "full" | "preview";
   categoryFilter?: "Wedding" | "Events";
@@ -30,7 +49,13 @@ export function PackagesSection({
   });
 
   if (variant === "preview") {
-    return <PackagesPreview packages={packages} h={h} />;
+    return (
+      <PackagesPreview
+        packages={packages}
+        categories={categories}
+        h={h}
+      />
+    );
   }
 
   const list = categoryFilter
@@ -135,66 +160,153 @@ export function PackagesSection({
 
 function PackagesPreview({
   packages,
+  categories,
   h,
 }: {
   packages: PackageItem[];
+  categories: PackageSubcategory[];
   h: ReturnType<typeof mergeHeading>;
 }) {
-  const cats = PACKAGE_CATEGORIES;
-  const [cat, setCat] = useState<(typeof cats)[number]>("Wedding");
-  const list = packages.filter((p) => (p.category === "Events" ? "Events" : "Wedding") === cat);
+  const activeCategories = [...categories]
+    .filter((category) => category.active !== false)
+    .sort(
+      (a, b) =>
+        (a.sort_order ?? 0) - (b.sort_order ?? 0),
+    );
+
+  const [categoryId, setCategoryId] = useState(
+    activeCategories[0]?.id ?? "",
+  );
+
+  const selectedCategoryId =
+    activeCategories.some(
+      (category) => category.id === categoryId,
+    )
+      ? categoryId
+      : activeCategories[0]?.id ?? "";
+
+  const list = selectedCategoryId
+    ? packages.filter(
+        (packageItem) =>
+          packageItem.active !== false &&
+          packageItem.category_id === selectedCategoryId,
+      )
+    : packages.filter(
+        (packageItem) => packageItem.active !== false,
+      );
+
   return (
     <section id="packages" className="bg-cream py-24 md:py-32">
       <div className="container-editorial">
         <Reveal className="mb-10">
-          <div className={`mx-auto max-w-2xl ${h.wrapperCls}`} style={h.wrapperStyle}>
-            {h.showEyebrow && <div className="eyebrow mb-4" style={h.eyebrowStyle}>{h.eyebrow}</div>}
-            {h.showTitle && <h2 className="font-serif text-4xl md:text-5xl" style={h.titleStyle}>{h.title}</h2>}
+          <div
+            className={`mx-auto max-w-2xl ${h.wrapperCls}`}
+            style={h.wrapperStyle}
+          >
+            {h.showEyebrow && (
+              <div
+                className="eyebrow mb-4"
+                style={h.eyebrowStyle}
+              >
+                {h.eyebrow}
+              </div>
+            )}
+
+            {h.showTitle && (
+              <h2
+                className="font-serif text-4xl md:text-5xl"
+                style={h.titleStyle}
+              >
+                {h.title}
+              </h2>
+            )}
+
             {h.showSubtitle && (
-              <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/70" style={h.subtitleStyle}>{h.subtitle}</p>
+              <p
+                className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/70"
+                style={h.subtitleStyle}
+              >
+                {h.subtitle}
+              </p>
             )}
           </div>
         </Reveal>
-        <div className="mb-12 flex flex-wrap justify-center gap-3">
-          {cats.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCat(c)}
-              className={`rounded-full border px-7 py-2.5 text-[0.7rem] uppercase tracking-[0.24em] transition-all ${
-                cat === c ? "border-ink bg-ink text-cream" : "border-border text-foreground/70 hover:border-ink"
-              }`}
-            >
-              {c === "Wedding" ? "Wedding Packages" : "Events"}
-            </button>
-          ))}
-        </div>
+
+        {activeCategories.length > 0 && (
+          <div className="mb-12 flex flex-wrap justify-center gap-3">
+            {activeCategories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setCategoryId(category.id)}
+                className={`rounded-full border px-7 py-2.5 text-[0.7rem] uppercase tracking-[0.24em] transition-all ${
+                  selectedCategoryId === category.id
+                    ? "border-ink bg-ink text-cream"
+                    : "border-border text-foreground/70 hover:border-ink"
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        )}
 
         {list.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">No packages in this category yet.</p>
+          <p className="py-16 text-center text-sm text-muted-foreground">
+            No packages in this category yet.
+          </p>
         ) : (
           <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {list.slice(0, 6).map((p, i) => (
-              <Reveal key={p.id} delay={(i % 3) * 0.06}>
-                <article className={`group flex h-full flex-col overflow-hidden rounded-3xl border bg-card shadow-[0_20px_60px_-30px_rgba(31,23,19,0.22)] transition-transform duration-500 hover:-translate-y-1 ${p.featured ? "border-gold" : "border-border"}`}>
-                  {p.featured && (
+            {list.slice(0, 6).map((packageItem, index) => (
+              <Reveal
+                key={packageItem.id}
+                delay={(index % 3) * 0.06}
+              >
+                <article
+                  className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border bg-card shadow-[0_20px_60px_-30px_rgba(31,23,19,0.22)] transition-transform duration-500 hover:-translate-y-1 ${
+                    packageItem.featured
+                      ? "border-gold"
+                      : "border-border"
+                  }`}
+                >
+                  {packageItem.featured && (
                     <div className="absolute right-4 top-6 z-10 rounded-full bg-gold px-4 py-1.5 text-[0.6rem] uppercase tracking-[0.28em] text-cream shadow-md">
-                      {p.badge || "Most Popular"}
+                      {packageItem.badge || "Most Popular"}
                     </div>
                   )}
-                  {p.image ? (
+
+                  {packageItem.image ? (
                     <div className="aspect-[4/3] w-full overflow-hidden bg-mist">
-                      <img src={p.image} alt={p.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                      <img
+                        src={packageItem.image}
+                        alt={packageItem.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
                     </div>
                   ) : (
                     <div className="aspect-[4/3] w-full bg-gradient-to-br from-mist via-cream to-background" />
                   )}
+
                   <div className="flex flex-1 flex-col p-7">
-                    <h3 className="font-serif text-2xl text-ink">{p.name}</h3>
-                    {p.description && (
-                      <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-foreground/70">{p.description}</p>
+                    <h3 className="font-serif text-2xl text-ink">
+                      {packageItem.name}
+                    </h3>
+
+                    {packageItem.description && (
+                      <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-foreground/70">
+                        {packageItem.description}
+                      </p>
                     )}
+
                     <div className="mt-6">
-                      <PkgButton href={packageDetailHref(p)} featured={p.featured}>
+                      <PkgButton
+                        href={packageDetailHref(
+                          packageItem,
+                          activeCategories,
+                        )}
+                        featured={packageItem.featured}
+                      >
                         View Package Details
                       </PkgButton>
                     </div>
