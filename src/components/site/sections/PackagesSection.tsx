@@ -256,58 +256,96 @@ function PackagesPreview({
             No packages in this category yet.
           </p>
         ) : (
-          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {list.slice(0, 6).map((packageItem, index) => (
-              <Reveal
-                key={packageItem.id}
-                delay={(index % 3) * 0.06}
-              >
+          <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-4">
+            {list.map((p, i) => (
+              <Reveal key={p.id} delay={(i % 4) * 0.06}>
                 <article
-                  className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border bg-card shadow-[0_20px_60px_-30px_rgba(31,23,19,0.22)] transition-transform duration-500 hover:-translate-y-1 ${
-                    packageItem.featured
-                      ? "border-gold"
-                      : "border-border"
+                  className={`relative flex h-full flex-col overflow-hidden rounded-3xl border bg-card shadow-[0_20px_60px_-30px_rgba(31,23,19,0.22)] transition-transform duration-500 hover:-translate-y-1 ${
+                    p.featured ? "border-gold" : "border-border"
                   }`}
                 >
-                  {packageItem.featured && (
+                  {p.featured && (
                     <div className="absolute right-4 top-6 z-10 rounded-full bg-gold px-4 py-1.5 text-[0.6rem] uppercase tracking-[0.28em] text-cream shadow-md">
-                      {packageItem.badge || "Most Popular"}
+                      {p.badge || "Most Popular"}
                     </div>
                   )}
 
-                  {packageItem.image ? (
+                  {p.image ? (
                     <div className="aspect-[4/3] w-full overflow-hidden bg-mist">
                       <img
-                        src={packageItem.image}
-                        alt={packageItem.name}
+                        src={p.image}
+                        alt={p.name}
                         loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
                       />
                     </div>
                   ) : (
                     <div className="aspect-[4/3] w-full bg-gradient-to-br from-mist via-cream to-background" />
                   )}
 
-                  <div className="flex flex-1 flex-col p-7">
-                    <h3 className="font-serif text-2xl text-ink">
-                      {packageItem.name}
+                  <div className="flex flex-1 flex-col p-8">
+                    {p.subtitle && (
+                      <div className="text-[0.65rem] uppercase tracking-[0.28em] text-gold">
+                        {p.subtitle}
+                      </div>
+                    )}
+
+                    <h3 className="mt-3 font-serif text-2xl text-ink">
+                      {p.name}
                     </h3>
 
-                    {packageItem.description && (
-                      <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-foreground/70">
-                        {packageItem.description}
+                    {p.description && (
+                      <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+                        {p.description}
                       </p>
                     )}
 
-                    <div className="mt-6">
+                    {p.long_description && (
+                      <p className="mt-2 text-sm leading-relaxed text-foreground/60">
+                        {p.long_description}
+                      </p>
+                    )}
+
+                    <div className="my-6 flex items-baseline gap-1 border-y border-border py-4">
+                      <span className="font-serif text-4xl text-ink">
+                        {p.price}
+                      </span>
+                    </div>
+
+                    {p.features?.length > 0 && (
+                      <ul className="mb-8 space-y-2.5">
+                        {p.features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground/80">
+                            <Check className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {p.addons && p.addons.length > 0 && (
+                      <div className="mb-6 rounded-2xl border border-border bg-cream/50 p-4">
+                        <div className="mb-2 text-[0.6rem] uppercase tracking-[0.28em] text-gold">
+                          Add-ons
+                        </div>
+
+                        <ul className="space-y-1 text-sm text-foreground/80">
+                          {p.addons.map((addon, idx) => (
+                            <li key={idx} className="flex justify-between gap-3">
+                              <span>{addon.title}</span>
+                              {addon.price && <span>{addon.price}</span>}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="mt-auto">
                       <PkgButton
-                        href={packageDetailHref(
-                          packageItem,
-                          activeCategories,
-                        )}
-                        featured={packageItem.featured}
+                        href={p.buttonLink || "/contact"}
+                        featured={p.featured}
                       >
-                        View Package Details
+                        {p.buttonText || "Enquire Now"}
                       </PkgButton>
                     </div>
                   </div>
@@ -315,8 +353,7 @@ function PackagesPreview({
               </Reveal>
             ))}
           </div>
-        )}
-      </div>
+        )}      </div>
     </section>
   );
 }
