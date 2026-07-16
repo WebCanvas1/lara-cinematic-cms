@@ -29,6 +29,7 @@ export function FeaturedFilms({
       <VideoEmbed
         youtube={film.youtube_url}
         vimeo={film.vimeo_url}
+        videoUrl={film.video_url}
         thumbnail={film.thumbnail_url || film.cover_url}
         title={film.title}
       />
