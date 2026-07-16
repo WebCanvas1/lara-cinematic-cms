@@ -91,15 +91,12 @@ export default function PackageCategory() {
         </section>
       ) : (
         <PackagesSection
-          packages={packages}
-          heading={{
-            eyebrow: "Investment",
-            title: selectedCategory.name,
-            subtitle:
-              selectedCategory.description ||
-              "Every collection can be tailored to your event.",
-          }}
-        />
+  packages={packages}
+  heading={{
+    showHeading: false,
+    showSubtitle: false,
+  }}
+/>
       )}
     </SiteLayout>
   );
