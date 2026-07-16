@@ -7,6 +7,7 @@ import type {
   GalleryItem,
   Testimonial,
   PackageItem,
+  PackageSubcategory,
   AddOnItem,
   HomepageSection,
   TeamMember,
@@ -164,6 +165,36 @@ export const deletePackage = ({
     id: data.id,
   });
 
+export const upsertPackageCategory = ({
+  data,
+}: {
+  data: Partial<PackageSubcategory>;
+}) =>
+  api.post<Result>("/api/package-categories", {
+    action: "upsert",
+    item: data,
+  });
+
+export const deletePackageCategory = ({
+  data,
+}: {
+  data: { id: string };
+}) =>
+  api.post<Result>("/api/package-categories", {
+    action: "delete",
+    id: data.id,
+  });
+
+export const reorderPackageCategories = ({
+  data,
+}: {
+  data: { ids: string[] };
+}) =>
+  api.post<Result>("/api/package-categories", {
+    action: "reorder",
+    ids: data.ids,
+  });
+
 export const upsertAddon = ({
   data,
 }: {
@@ -189,13 +220,14 @@ export const reorderItems = ({
 }: {
   data: {
     table:
-      | "services"
-      | "portfolio"
-      | "portfolio-categories"
-      | "gallery"
-      | "testimonials"
-      | "packages"
-      | "addons";
+  | "services"
+  | "portfolio"
+  | "portfolio-categories"
+  | "gallery"
+  | "testimonials"
+  | "package-categories"
+  | "packages"
+  | "addons";
     ids: string[];
   };
 }) =>
