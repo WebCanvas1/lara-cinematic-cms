@@ -9,15 +9,19 @@ const PortfolioCategories = lazy(
 const PortfolioCategory = lazy(
   () => import("./pages/PortfolioCategory"),
 );
-const PackagesCategory = lazy(
-  () => import("./pages/PackagesCategory"),
+const PackageCategory = lazy(
+  () => import("./pages/PackageCategory"),
 );
 const Gallery = lazy(() => import("./pages/Gallery"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Admin = lazy(() => import("./pages/Admin"));
-const AdminUnlock = lazy(() => import("./pages/AdminUnlock"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+const AdminUnlock = lazy(
+  () => import("./pages/AdminUnlock"),
+);
+const NotFound = lazy(
+  () => import("./pages/NotFound"),
+);
 
 function LoadingSplash() {
   return (
@@ -35,43 +39,73 @@ export function App() {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        <Route path="/portfolio" element={<Portfolio />} />
+        <Route
+          path="/portfolio"
+          element={<Portfolio />}
+        />
 
         <Route
           path="/portfolio/photography"
-          element={<PortfolioCategories kind="Photography" />}
+          element={
+            <PortfolioCategories kind="Photography" />
+          }
         />
+
         <Route
           path="/portfolio/videography"
-          element={<PortfolioCategories kind="Videography" />}
+          element={
+            <PortfolioCategories kind="Videography" />
+          }
         />
 
         <Route
           path="/portfolio/photography/:categorySlug"
-          element={<PortfolioCategory kind="Photography" />}
+          element={
+            <PortfolioCategory kind="Photography" />
+          }
         />
+
         <Route
           path="/portfolio/videography/:categorySlug"
-          element={<PortfolioCategory kind="Videography" />}
+          element={
+            <PortfolioCategory kind="Videography" />
+          }
         />
 
         <Route
-          path="/packages/weddings"
-          element={<PackagesCategory kind="Wedding" />}
+          path="/packages/:categorySlug"
+          element={<PackageCategory />}
         />
+
         <Route
-          path="/packages/events"
-          element={<PackagesCategory kind="Events" />}
+          path="/gallery"
+          element={<Gallery />}
         />
 
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
+        <Route
+          path="/about"
+          element={<About />}
+        />
 
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/unlock" element={<AdminUnlock />} />
+        <Route
+          path="/contact"
+          element={<Contact />}
+        />
 
-        <Route path="*" element={<NotFound />} />
+        <Route
+          path="/admin"
+          element={<Admin />}
+        />
+
+        <Route
+          path="/admin/unlock"
+          element={<AdminUnlock />}
+        />
+
+        <Route
+          path="*"
+          element={<NotFound />}
+        />
       </Routes>
     </Suspense>
   );
