@@ -1171,6 +1171,7 @@ function PortfolioTab({
           description: item.description || "",
           youtube_url: item.youtube_url || null,
           vimeo_url: item.vimeo_url || null,
+          video_url: item.video_url || null,
           thumbnail_url: item.thumbnail_url || null,
           cover_url: item.cover_url || null,
           featured: item.featured ?? false,
@@ -1197,6 +1198,9 @@ function PortfolioTab({
                 title: "",
                 category: "Videography",
                 category_id: videoCategories[0]?.id,
+                youtube_url: null,
+                vimeo_url: null,
+                video_url: null,
                 featured: false,
                 sort_order: items.length,
               })
@@ -1328,6 +1332,24 @@ function PortfolioTab({
               }
             />
           </Field>
+
+          <Field label="Cloudflare / direct video URL">
+            <TextInput
+              value={editing.video_url || ""}
+              onChange={(event) =>
+                setEditing({
+                  ...editing,
+                  video_url: event.target.value,
+                })
+              }
+              placeholder="https://example.com/video.mp4"
+            />
+          </Field>
+
+          <p className="-mt-2 text-xs leading-relaxed text-muted-foreground">
+            Paste a public Cloudflare Stream, MP4 or CDN video URL. Use only one
+            video source field per video.
+          </p>
 
           <ImagePicker
             label="Thumbnail"
