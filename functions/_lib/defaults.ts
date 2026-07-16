@@ -12,6 +12,7 @@ import type {
   AddOnItem,
   TeamMember,
   PortfolioSubcategory,
+  PackageSubcategory,
 } from "../../src/lib/site-types";
 import { DEFAULT_HOMEPAGE_SECTIONS, DEFAULT_NAV, type HomepageSection } from "../../src/lib/site-types";
 
@@ -130,6 +131,28 @@ export const DEFAULT_TESTIMONIALS: Testimonial[] = [
 
 export const DEFAULT_ENQUIRIES: Enquiry[] = [];
 
+// Default dynamic package categories used when KV has no saved categories.
+export const DEFAULT_PACKAGE_CATEGORIES: PackageSubcategory[] = [
+  {
+    id: "package-weddings",
+    name: "Wedding Packages",
+    slug: "wedding-packages",
+    description: "Photography and videography packages created for weddings and elopements.",
+    cover_image: "",
+    active: true,
+    sort_order: 1,
+  },
+  {
+    id: "package-events",
+    name: "Events",
+    slug: "events",
+    description: "Photography and videography packages for private, cultural, family, and corporate events.",
+    cover_image: "",
+    active: true,
+    sort_order: 2,
+  },
+];
+
 export const DEFAULT_PACKAGES: PackageItem[] = [
   {
     id: "pkg-1",
@@ -141,6 +164,7 @@ export const DEFAULT_PACKAGES: PackageItem[] = [
     description: "A refined photography-only package for intimate ceremonies and elopements.",
     long_description: "A refined, photography-only collection designed for intimate ceremonies and elopements. Includes a single lead photographer, editorial coverage, and a heirloom online gallery.",
     category: "Wedding",
+    category_id: "package-weddings",
     addons: [],
     features: [
       "Up to 6 hours coverage",
@@ -170,6 +194,8 @@ export const DEFAULT_PACKAGES: PackageItem[] = [
       "Engagement session",
       "Heirloom online gallery",
     ],
+    category: "Wedding",
+    category_id: "package-weddings",
     buttonText: "Enquire Now",
     buttonLink: "/contact",
     active: true,
@@ -192,6 +218,8 @@ export const DEFAULT_PACKAGES: PackageItem[] = [
       "Cinematic teaser trailer",
       "Private online gallery",
     ],
+    category: "Wedding",
+    category_id: "package-weddings",
     buttonText: "Enquire Now",
     buttonLink: "/contact",
     active: true,
@@ -215,6 +243,8 @@ export const DEFAULT_PACKAGES: PackageItem[] = [
       "Drone coverage included",
       "Engagement session",
     ],
+    category: "Wedding",
+    category_id: "package-weddings",
     buttonText: "Enquire Now",
     buttonLink: "/contact",
     active: true,
@@ -242,6 +272,7 @@ export const DEFAULTS = {
   testimonials: DEFAULT_TESTIMONIALS,
   enquiries: DEFAULT_ENQUIRIES,
   packages: DEFAULT_PACKAGES,
+  "package-categories": DEFAULT_PACKAGE_CATEGORIES,
   addons: DEFAULT_ADDONS,
   team: DEFAULT_TEAM,
   "homepage-layout": DEFAULT_HOMEPAGE_SECTIONS as HomepageSection[],
