@@ -87,14 +87,28 @@ export type PortfolioItem = {
   category_id?: string;
 
   description: string;
+
+  /**
+   * Video Sources
+   *
+   * The client can use ONE of these.
+   */
+
+  // YouTube link
   youtube_url: string | null;
+
+  // Vimeo link
   vimeo_url: string | null;
+
+  // Cloudflare Stream / Cloudflare Images / MP4 / CDN URL
+  video_url: string | null;
+
   thumbnail_url: string | null;
   cover_url: string | null;
+
   featured: boolean;
   sort_order: number;
 };
-
 export type GalleryItem = {
   id: string;
   image_url: string;
