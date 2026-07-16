@@ -11,12 +11,47 @@ export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState<string | null>(null);
   const { data } = useSuspenseQuery(siteBundleQuery);
 
-  const nav = (data.nav ?? DEFAULT_NAV).items.filter(
-    (item) => item.enabled !== false,
+  const savedNav = data.nav ?? DEFAULT_NAV;
+
+  const packageCategories = [...(data.package_categories ?? [])]
+    .filter((category) => category.active !== false)
+    .sort(
+      (a, b) =>
+        (a.sort_order ?? 0) - (b.sort_order ?? 0),
+    );
+
+  const nav = savedNav.items
+    .map((item): NavItem => {
+      if (item.id !== "packages") {
+        return item;
+      }
+
+      return {
+        ...item,
+        children:
+          packageCategories.length > 0
+            ? packageCategories.map((category) => ({
+                label: category.name,
+                href: `/packages/${category.slug}`,
+                enabled: true,
+              }))
+            : item.children,
+      };
+    })
+    .filter((item) => item.enabled !== false);
+
+  const contactItem = nav.find(
+    (item) => item.id === "contact",
   );
 
-  const contactItem = nav.find((item) => item.id === "contact");
-  const primary = nav.filter((item) => item.id !== "contact");
+  const primary = nav.filter(
+    (item) => item.id !== "contact",
+  );
+
+  function closeMobileMenu() {
+    setOpen(false);
+    setMobileOpen(null);
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
@@ -24,7 +59,7 @@ export function SiteHeader() {
         <Link
           to="/"
           className="group flex items-center"
-          onClick={() => setOpen(false)}
+          onClick={closeMobileMenu}
           aria-label="Lara Cinematography — Home"
         >
           <div className="h-[68px] w-[135px] overflow-hidden md:h-[88px] md:w-[180px]">
@@ -38,7 +73,10 @@ export function SiteHeader() {
 
         <nav className="hidden items-center gap-8 md:flex">
           {primary.map((item) => (
-            <DesktopItem key={item.id} item={item} />
+            <DesktopItem
+              key={item.id}
+              item={item}
+            />
           ))}
 
           {contactItem && (
@@ -54,7 +92,9 @@ export function SiteHeader() {
         <button
           type="button"
           className="md:hidden"
-          onClick={() => setOpen((current) => !current)}
+          onClick={() =>
+            setOpen((current) => !current)
+          }
           aria-label="Toggle navigation"
           aria-expanded={open}
         >
@@ -70,8 +110,11 @@ export function SiteHeader() {
         <div className="border-t border-border bg-background md:hidden">
           <nav className="container-editorial flex flex-col py-6">
             {nav.map((item) => {
-              const children = (item.children || []).filter(
-                (child) => child.enabled !== false,
+              const children = (
+                item.children || []
+              ).filter(
+                (child) =>
+                  child.enabled !== false,
               );
 
               if (children.length === 0) {
@@ -79,19 +122,19 @@ export function SiteHeader() {
                   <Link
                     key={item.id}
                     to={item.href || "/"}
-                    onClick={() => {
-                      setOpen(false);
-                      setMobileOpen(null);
-                    }}
+                    onClick={closeMobileMenu}
                     className="py-3 text-sm uppercase tracking-[0.22em] text-foreground/80 transition-colors hover:text-ink"
-                    activeProps={{ className: "text-ink" }}
+                    activeProps={{
+                      className: "text-ink",
+                    }}
                   >
                     {item.label}
                   </Link>
                 );
               }
 
-              const isOpen = mobileOpen === item.id;
+              const isOpen =
+                mobileOpen === item.id;
 
               return (
                 <div
@@ -101,7 +144,9 @@ export function SiteHeader() {
                   <button
                     type="button"
                     onClick={() =>
-                      setMobileOpen(isOpen ? null : item.id)
+                      setMobileOpen(
+                        isOpen ? null : item.id,
+                      )
                     }
                     className="flex w-full items-center justify-between py-3 text-sm uppercase tracking-[0.22em] text-foreground/80"
                     aria-expanded={isOpen}
@@ -110,7 +155,9 @@ export function SiteHeader() {
 
                     <ChevronDown
                       className={`h-4 w-4 transition-transform ${
-                        isOpen ? "rotate-180" : ""
+                        isOpen
+                          ? "rotate-180"
+                          : ""
                       }`}
                     />
                   </button>
@@ -121,10 +168,7 @@ export function SiteHeader() {
                         <Link
                           key={child.href}
                           to={child.href}
-                          onClick={() => {
-                            setOpen(false);
-                            setMobileOpen(null);
-                          }}
+                          onClick={closeMobileMenu}
                           className="py-2 text-xs uppercase tracking-[0.22em] text-foreground/70 transition-colors hover:text-ink"
                         >
                           {child.label}
@@ -142,8 +186,14 @@ export function SiteHeader() {
   );
 }
 
-function DesktopItem({ item }: { item: NavItem }) {
-  const children = (item.children || []).filter(
+function DesktopItem({
+  item,
+}: {
+  item: NavItem;
+}) {
+  const children = (
+    item.children || []
+  ).filter(
     (child) => child.enabled !== false,
   );
 
@@ -152,8 +202,13 @@ function DesktopItem({ item }: { item: NavItem }) {
       <Link
         to={item.href || "/"}
         className="text-[0.78rem] uppercase tracking-[0.22em] text-foreground/70 transition-colors hover:text-ink"
-        activeProps={{ className: "text-ink" }}
-        activeOptions={{ exact: (item.href || "/") === "/" }}
+        activeProps={{
+          className: "text-ink",
+        }}
+        activeOptions={{
+          exact:
+            (item.href || "/") === "/",
+        }}
       >
         {item.label}
       </Link>
@@ -179,7 +234,7 @@ function DesktopItem({ item }: { item: NavItem }) {
           left-1/2
           top-full
           z-50
-          w-56
+          w-64
           -translate-x-1/2
           rounded-2xl
           border
