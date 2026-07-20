@@ -114,9 +114,13 @@ export function PackagesSection({
                     <p className="mt-2 text-sm leading-relaxed text-foreground/60">{p.long_description}</p>
                   )}
 
-                  <div className="my-6 flex items-baseline gap-1 border-y border-border py-4">
-                    <span className="font-serif text-4xl text-ink">{p.price}</span>
-                  </div>
+                  {p.show_price !== false && p.price && (
+  <div className="my-6 flex items-baseline gap-1 border-y border-border py-4">
+    <span className="font-serif text-4xl text-ink">
+      {p.price}
+    </span>
+  </div>
+)}
 
                   {p.features?.length > 0 && (
                     <ul className="mb-8 space-y-2.5">
