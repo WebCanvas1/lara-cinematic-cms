@@ -2278,6 +2278,7 @@ function PackagesTab({
           name: item.name || "Untitled",
           subtitle: item.subtitle || "",
           price: item.price || "",
+          show_price: item.show_price ?? true,
           image: item.image || "",
           badge: item.badge || "",
           description: item.description || "",
@@ -2317,6 +2318,7 @@ function PackagesTab({
                 name: "",
                 subtitle: "",
                 price: "",
+                show_price: true,
                 features: [],
                 addons: [],
                 category_id: activeCategories[0]?.id,
@@ -2745,6 +2747,19 @@ function AddOnsTab({ items }: { items: AddOnItem[] }) {
         <Field label="Title"><TextInput value={editing.title || ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></Field>
         <Field label="Description"><TextArea rows={3} value={editing.description || ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
         <Field label="Price"><TextInput value={editing.price || ""} onChange={(e) => setEditing({ ...editing, price: e.target.value })} /></Field>
+        <label className="flex items-center gap-2 text-sm">
+  <input
+    type="checkbox"
+    checked={editing.show_price ?? true}
+    onChange={(e) =>
+      setEditing({
+        ...editing,
+        show_price: e.target.checked,
+      })
+    }
+  />
+  Show package price
+</label>
         <Field label="Icon (any Lucide icon name, e.g. Clock, Film, Plane, Camera)"><TextInput value={editing.icon || ""} onChange={(e) => setEditing({ ...editing, icon: e.target.value })} /></Field>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.active ?? true} onChange={(e) => setEditing({ ...editing, active: e.target.checked })} /> Active</label>
         <div className="mt-4 flex justify-end gap-2"><SecondaryButton onClick={() => setEditing(null)}>Cancel</SecondaryButton><PrimaryButton onClick={() => save(editing)}>Save</PrimaryButton></div>
