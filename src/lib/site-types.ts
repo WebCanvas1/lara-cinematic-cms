@@ -180,6 +180,7 @@ export type PackageItem = {
   name: string;
   subtitle: string;
   price: string;
+  show_price?: boolean;
   image: string;
   badge?: string;
   description?: string;
