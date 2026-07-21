@@ -110,18 +110,6 @@ export default function Portfolio() {
                               className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
                           </div>
-
-                          {photo.alt && (
-                            <div className="p-5">
-                              <div className="text-[0.65rem] uppercase tracking-[0.24em] text-gold">
-                                Photography
-                              </div>
-
-                              <h3 className="mt-2 font-serif text-xl text-ink">
-                                {photo.alt}
-                              </h3>
-                            </div>
-                          )}
                         </article>
                       </Reveal>
                     ))}
