@@ -1483,19 +1483,6 @@ function GalleryTab({
             <img src={item.image_url} alt={item.alt} className="aspect-square w-full object-cover" />
 
             <div className="space-y-2 p-3">
-              <TextInput
-                value={item.alt}
-                onChange={async (event) => {
-                  try {
-                    await up({ data: { ...item, alt: event.target.value } });
-                    qc.invalidateQueries();
-                  } catch {
-                    toast.error("Could not update image");
-                  }
-                }}
-                placeholder="Alt text"
-              />
-
               <SelectInput
                 value={item.category_id || ""}
                 onChange={async (event) => {
