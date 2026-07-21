@@ -131,12 +131,12 @@ export default function PortfolioCategory({
                 >
                   <article>
                     <VideoEmbed
-  youtube={film.youtube_url}
-  vimeo={film.vimeo_url}
-  videoUrl={film.video_url}
-  thumbnail={film.thumbnail_url || film.cover_url}
-  title={film.title}
-/>
+                      youtube={film.youtube_url}
+                      vimeo={film.vimeo_url}
+                      videoUrl={film.video_url}
+                      thumbnail={film.thumbnail_url || film.cover_url}
+                      title={film.title}
+                    />
 
                     <div className="mt-5">
                       <div className="text-[0.7rem] uppercase tracking-[0.24em] text-gold">
@@ -171,14 +171,6 @@ export default function PortfolioCategory({
                       loading="lazy"
                       className="aspect-[4/5] w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
                     />
-
-                    {photo.alt && (
-                      <div className="p-5">
-                        <p className="font-serif text-lg text-ink">
-                          {photo.alt}
-                        </p>
-                      </div>
-                    )}
                   </article>
                 </Reveal>
               ))}
