@@ -4,6 +4,7 @@ export interface Env {
   GA4_PROPERTY_ID?: string;
   GA4_CLIENT_EMAIL?: string;
   GA4_PRIVATE_KEY?: string;
+  WEB3FORMS_ACCESS_KEY?: string;
 }
 
 export type Ctx = EventContext<Env, string, { isAdmin?: boolean }>;
