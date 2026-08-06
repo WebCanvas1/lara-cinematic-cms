@@ -2259,6 +2259,30 @@ function PackagesTab({
 
   async function save(item: Partial<PackageItem>) {
     try {
+      /*
+       * Keep a single "Most Popular" package within each dynamic package
+       * category. When this package is marked as featured, clear the featured
+       * flag from any other package assigned to the same category before
+       * saving the current package.
+       */
+      if (item.featured && item.category_id) {
+        const otherFeaturedPackages = items.filter(
+          (packageItem) =>
+            packageItem.id !== item.id &&
+            packageItem.category_id === item.category_id &&
+            packageItem.featured,
+        );
+
+        for (const packageItem of otherFeaturedPackages) {
+          await up({
+            data: {
+              ...packageItem,
+              featured: false,
+            },
+          });
+        }
+      }
+
       await up({
         data: {
           id: item.id,
@@ -2267,7 +2291,9 @@ function PackagesTab({
           price: item.price || "",
           show_price: item.show_price ?? true,
           image: item.image || "",
-          badge: item.badge || "",
+          badge:
+            item.badge?.trim() ||
+            (item.featured ? "Most Popular" : ""),
           description: item.description || "",
           long_description: item.long_description || "",
           category_id: item.category_id || undefined,
@@ -2286,8 +2312,12 @@ function PackagesTab({
       });
 
       setEditing(null);
-      qc.invalidateQueries();
-      toast.success("Package saved");
+      await qc.invalidateQueries();
+      toast.success(
+        item.featured
+          ? "Package saved as Most Popular"
+          : "Package saved",
+      );
     } catch {
       toast.error("Could not save package");
     }
@@ -2602,14 +2632,20 @@ function PackagesTab({
               <input
                 type="checkbox"
                 checked={editing.featured ?? false}
-                onChange={(event) =>
+                onChange={(event) => {
+                  const featured = event.target.checked;
+
                   setEditing({
                     ...editing,
-                    featured: event.target.checked,
-                  })
-                }
+                    featured,
+                    badge:
+                      featured && !editing.badge?.trim()
+                        ? "Most Popular"
+                        : editing.badge,
+                  });
+                }}
               />
-              Most Popular / Featured
+              Mark as Most Popular
             </label>
 
             <label className="flex items-center gap-2 text-sm">
@@ -2626,6 +2662,14 @@ function PackagesTab({
               Active
             </label>
           </div>
+
+          {editing.featured && (
+            <p className="rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-xs leading-relaxed text-foreground/75">
+              This package will receive the highlighted Most Popular styling.
+              Saving it will automatically remove the Most Popular status from
+              any other package in the same category.
+            </p>
+          )}
 
           <div className="mt-4 flex justify-end gap-2">
             <SecondaryButton onClick={() => setEditing(null)}>
