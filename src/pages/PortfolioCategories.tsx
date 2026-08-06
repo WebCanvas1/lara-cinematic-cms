@@ -73,7 +73,7 @@ export default function PortfolioCategories({
                 >
                   <Link
                     to={`${basePath}/${category.slug}`}
-                    className="group block h-full overflow-hidden rounded-3xl border border-border bg-cream shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-cream shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                   >
                     <div className="overflow-hidden bg-mist">
                       {category.cover_image ? (
@@ -81,10 +81,10 @@ export default function PortfolioCategories({
                           src={category.cover_image}
                           alt={category.name}
                           loading="lazy"
-                          className="block h-auto w-full transition-transform duration-[1200ms] group-hover:scale-[1.02]"
+                          className="h-56 w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
                         />
                       ) : (
-                        <div className="flex min-h-48 items-center justify-center bg-mist px-5 text-center">
+                        <div className="flex h-56 items-center justify-center bg-mist px-5 text-center">
                           <span className="font-serif text-xl text-foreground/40">
                             {category.name}
                           </span>
@@ -92,7 +92,7 @@ export default function PortfolioCategories({
                       )}
                     </div>
 
-                    <div className="p-4">
+                    <div className="flex flex-1 flex-col p-4">
                       <div className="text-[0.64rem] uppercase tracking-[0.22em] text-gold">
                         {kind}
                       </div>
@@ -107,7 +107,7 @@ export default function PortfolioCategories({
                         </p>
                       )}
 
-                      <div className="mt-4 text-[0.68rem] uppercase tracking-[0.22em] text-ink transition-colors group-hover:text-gold">
+                      <div className="mt-auto pt-4 text-[0.68rem] uppercase tracking-[0.22em] text-ink transition-colors group-hover:text-gold">
                         View collection
                       </div>
                     </div>
