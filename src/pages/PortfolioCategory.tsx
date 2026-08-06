@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import { useEffect } from "react";
+
 import {
   siteBundleQuery,
   portfolioQuery,
@@ -158,18 +159,19 @@ export default function PortfolioCategory({
               ))}
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="columns-1 gap-5 sm:columns-2 lg:columns-3">
               {photographyItems.map((photo, index) => (
                 <Reveal
                   key={photo.id}
                   delay={(index % 3) * 0.05}
+                  className="mb-5 break-inside-avoid"
                 >
                   <article className="group overflow-hidden rounded-3xl bg-mist shadow-sm">
                     <img
                       src={photo.image_url}
                       alt={photo.alt || selectedCategory.name}
                       loading="lazy"
-                      className="aspect-[4/5] w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                      className="block h-auto w-full transition-transform duration-[1200ms] group-hover:scale-[1.02]"
                     />
                   </article>
                 </Reveal>
