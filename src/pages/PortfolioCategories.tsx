@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+
 import { siteBundleQuery } from "@/lib/queries";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Reveal } from "@/components/site/Reveal";
@@ -64,15 +65,15 @@ export default function PortfolioCategories({
               </p>
             </div>
           ) : (
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mx-auto grid max-w-6xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {categories.map((category, index) => (
                 <Reveal
                   key={category.id}
-                  delay={(index % 3) * 0.06}
+                  delay={(index % 4) * 0.06}
                 >
                   <Link
                     to={`${basePath}/${category.slug}`}
-                    className="group block overflow-hidden rounded-3xl border border-border bg-cream shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    className="group block h-full overflow-hidden rounded-3xl border border-border bg-cream shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                   >
                     <div className="overflow-hidden bg-mist">
                       {category.cover_image ? (
@@ -80,23 +81,23 @@ export default function PortfolioCategories({
                           src={category.cover_image}
                           alt={category.name}
                           loading="lazy"
-                          className="aspect-[4/3] w-full object-cover transition-transform duration-[1200ms] group-hover:scale-105"
+                          className="block h-auto w-full transition-transform duration-[1200ms] group-hover:scale-[1.02]"
                         />
                       ) : (
-                        <div className="flex aspect-[4/3] items-center justify-center bg-mist px-6 text-center">
-                          <span className="font-serif text-2xl text-foreground/40">
+                        <div className="flex min-h-48 items-center justify-center bg-mist px-5 text-center">
+                          <span className="font-serif text-xl text-foreground/40">
                             {category.name}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    <div className="p-6">
-                      <div className="text-[0.68rem] uppercase tracking-[0.22em] text-gold">
+                    <div className="p-4">
+                      <div className="text-[0.64rem] uppercase tracking-[0.22em] text-gold">
                         {kind}
                       </div>
 
-                      <h2 className="mt-2 font-serif text-2xl text-ink">
+                      <h2 className="mt-2 font-serif text-xl text-ink">
                         {category.name}
                       </h2>
 
@@ -106,7 +107,7 @@ export default function PortfolioCategories({
                         </p>
                       )}
 
-                      <div className="mt-5 text-[0.7rem] uppercase tracking-[0.22em] text-ink transition-colors group-hover:text-gold">
+                      <div className="mt-4 text-[0.68rem] uppercase tracking-[0.22em] text-ink transition-colors group-hover:text-gold">
                         View collection
                       </div>
                     </div>
