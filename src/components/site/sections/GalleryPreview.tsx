@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
+
 import { Reveal } from "../Reveal";
+import { Carousel } from "../Carousel";
 import type { GalleryItem, HeadingConfig } from "@/lib/site-types";
 import { mergeHeading } from "./section-heading";
-import { Carousel } from "../Carousel";
 
 export function GalleryPreview({
   items,
@@ -18,32 +19,67 @@ export function GalleryPreview({
   titleDefault?: string;
 }) {
   if (!items.length) return null;
+
   const shown = items.slice(0, 20);
-  const h = mergeHeading(heading, { eyebrow: eyebrowDefault, title: titleDefault });
+  const h = mergeHeading(heading, {
+    eyebrow: eyebrowDefault,
+    title: titleDefault,
+  });
+
   const slides = shown.map((item) => (
-    <div key={item.id} className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-mist shadow-sm">
+    <div
+      key={item.id}
+      className="group relative overflow-hidden rounded-2xl bg-mist shadow-sm"
+    >
       <img
         src={item.image_url}
         alt={item.alt || "Gallery image"}
         loading="lazy"
-        className="h-full w-full object-cover transition-transform duration-[1600ms] ease-out group-hover:scale-105"
+        className="block h-auto w-full transition-transform duration-[1600ms] ease-out group-hover:scale-[1.02]"
       />
     </div>
   ));
+
   return (
     <section className="bg-cream py-24 md:py-32">
       <div className="container-editorial">
         <Reveal className="mb-14">
-          <div className={`mx-auto max-w-2xl ${h.wrapperCls}`} style={h.wrapperStyle}>
-            {h.showEyebrow && <div className="eyebrow mb-4" style={h.eyebrowStyle}>{h.eyebrow}</div>}
-            {h.showTitle && <h2 className="font-serif text-4xl md:text-5xl" style={h.titleStyle}>{h.title}</h2>}
+          <div
+            className={`mx-auto max-w-2xl ${h.wrapperCls}`}
+            style={h.wrapperStyle}
+          >
+            {h.showEyebrow && (
+              <div className="eyebrow mb-4" style={h.eyebrowStyle}>
+                {h.eyebrow}
+              </div>
+            )}
+
+            {h.showTitle && (
+              <h2
+                className="font-serif text-4xl md:text-5xl"
+                style={h.titleStyle}
+              >
+                {h.title}
+              </h2>
+            )}
+
             {h.showSubtitle && (
-              <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/70" style={h.subtitleStyle}>{h.subtitle}</p>
+              <p
+                className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-foreground/70"
+                style={h.subtitleStyle}
+              >
+                {h.subtitle}
+              </p>
             )}
           </div>
         </Reveal>
 
-        <Carousel slidesDesktop={4} slidesTablet={2} slidesMobile={1} gapPx={20}>
+        <Carousel
+          slidesDesktop={4}
+          slidesTablet={2}
+          slidesMobile={1}
+          gapPx={20}
+        >
           {slides}
         </Carousel>
 
